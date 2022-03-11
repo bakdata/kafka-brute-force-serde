@@ -44,6 +44,18 @@ import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.storage.Converter;
 import org.apache.kafka.connect.storage.StringConverter;
 
+/**
+ * Kafka {@code Converter} that deserializes messages of an unknown serialization format. Serialization is not supported
+ * by this converter.
+ * <p>
+ * Each serialization format that is tested for deserialization is first applied using {@link LargeMessageConverter} and
+ * then using the standard serialization format. This converter tests the following format in this order:
+ * <ul>
+ *     <li>{@link AvroConverter} (if {@code schema.registry.url} is present in the converter configuration</li>
+ *     <li>{@link StringConverter}</li>
+ *     <li>{@link ByteArrayConverter}</li>
+ * </ul>
+ */
 @NoArgsConstructor
 @Slf4j
 public class BruteForceConverter implements Converter {
@@ -89,7 +101,8 @@ public class BruteForceConverter implements Converter {
 
     @Override
     public byte[] fromConnectData(final String topic, final Schema schema, final Object value) {
-        throw new SerializationException("BruteForceConverter only supports converting to connect data");
+        throw new SerializationException(
+                BruteForceConverter.class.getSimpleName() + " only supports converting to connect data");
     }
 
     @Override

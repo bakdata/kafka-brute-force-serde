@@ -1,4 +1,4 @@
-description = "Kafka Connect Converter that deserializes messages of an unknown format"
+description = "Kafka Connect Converter that deserializes messages of an unknown serialization format"
 
 
 

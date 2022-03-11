@@ -29,6 +29,10 @@ import lombok.NoArgsConstructor;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serializer;
 
+/**
+ * Kafka {@code Deserializer} used by {@link BruteForceSerde}. This serializer cannot be used to serialize any
+ * messages.
+ */
 @NoArgsConstructor
 public class BruteForceSerializer<T> implements Serializer<T> {
 
@@ -39,7 +43,7 @@ public class BruteForceSerializer<T> implements Serializer<T> {
 
     @Override
     public byte[] serialize(final String topic, final T data) {
-        throw new SerializationException("BruteForceSerde only supports deserialization");
+        throw new SerializationException(BruteForceSerde.class.getSimpleName() + " only supports deserialization");
     }
 
     @Override

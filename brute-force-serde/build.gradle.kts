@@ -1,4 +1,4 @@
-description = "Kafka SerDe that deserializes messages of an unknown format"
+description = "Kafka SerDe that deserializes messages of an unknown serialization format"
 
 plugins {
     id("com.github.davidmc24.gradle.plugin.avro") version "1.2.1"

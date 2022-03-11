@@ -44,6 +44,20 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes.ByteArraySerde;
 import org.apache.kafka.common.serialization.Serdes.StringSerde;
 
+/**
+ * Kafka {@code Deserializer} that deserializes messages of an unknown serialization format.
+ * <p>
+ * Each serialization format that is tested for deserialization is first applied using {@link LargeMessageDeserializer}
+ * and then using the standard serialization format. This serde tests the following format in this order:
+ * <ul>
+ *     <li>{@link io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer} (if {@code schema.registry.url} is
+ *     present in the serde configuration</li>
+ *     <li>{@link io.confluent.kafka.streams.serdes.avro.GenericAvroDeserializer} (if {@code schema.registry.url} is
+ *     present in the serde configuration</li>
+ *     <li>{@link org.apache.kafka.common.serialization.StringDeserializer}</li>
+ *     <li>{@link ByteArrayDeserializer}</li>
+ * </ul>
+ */
 @NoArgsConstructor
 @Slf4j
 public class BruteForceDeserializer implements Deserializer<Object> {
