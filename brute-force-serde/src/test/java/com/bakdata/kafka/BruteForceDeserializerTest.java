@@ -87,13 +87,13 @@ class BruteForceDeserializerTest {
         return generateSerdes(Serdes.ByteArray());
     }
 
-    private static <T> Stream<Arguments> generateSerdes(final Serde<T> t) {
+    private static <T> Stream<Arguments> generateSerdes(final Serde<T> baseSerde) {
         return Stream.<Function<Serde<T>, SerdeFactory<T>>>of(
                         BruteForceDeserializerTest::configured,
-                        s -> createLargeMessageSerde(s, 0),
-                        s -> createLargeMessageSerde(s, Integer.MAX_VALUE)
+                        serde -> createLargeMessageSerde(serde, 0),
+                        serde -> createLargeMessageSerde(serde, Integer.MAX_VALUE)
                 )
-                .map(f -> f.apply(t))
+                .map(f -> f.apply(baseSerde))
                 .map(Arguments::of);
     }
 
@@ -119,7 +119,7 @@ class BruteForceDeserializerTest {
         serde.configure(new StreamsConfig(properties).originals(), false);
         final KStream<Integer, Object> input = builder.stream(INPUT_TOPIC, Consumed.<Integer, Object>with(null, serde))
                 //force usage of default serde. Otherwise, consumed serde would be used for serialization
-                .mapValues(a -> a);
+                .mapValues(self -> self);
         input.to(OUTPUT_TOPIC);
         return builder.build();
     }
@@ -179,7 +179,7 @@ class BruteForceDeserializerTest {
 
     @Test
     void shouldReadNullKey() {
-        this.createTopology(p -> createKeyTopology(p, StringSerde.class), new Properties());
+        this.createTopology(properties -> createKeyTopology(properties, StringSerde.class), new Properties());
         this.topology.input()
                 .withKeySerde(Serdes.String())
                 .withValueSerde(Serdes.Integer())
@@ -197,7 +197,7 @@ class BruteForceDeserializerTest {
 
     @Test
     void shouldReadNullValue() {
-        this.createTopology(p -> createValueTopology(p, StringSerde.class), new Properties());
+        this.createTopology(properties -> createValueTopology(properties, StringSerde.class), new Properties());
         this.topology.input()
                 .withKeySerde(Serdes.Integer())
                 .withValueSerde(Serdes.String())

@@ -115,21 +115,20 @@ class BruteForceConverterTest {
         );
     }
 
-    private static <T> SerializerFactory<T> configured(
-            final Serializer<T> serializer) {
+    private static <T> SerializerFactory<T> configured(            final Serializer<T> serializer) {
         return (config, isKey) -> {
             serializer.configure(config, isKey);
             return serializer;
         };
     }
 
-    private static <T> Stream<Arguments> generateSerializers(final Serde<T> t) {
+    private static <T> Stream<Arguments> generateSerializers(final Serde<T> baseSerde) {
         return Stream.<Function<Serde<T>, SerializerFactory<T>>>of(
-                        s -> configured(s.serializer()),
-                        s -> createLargeMessageSerializer(s, 0),
-                        s -> createLargeMessageSerializer(s, Integer.MAX_VALUE)
+                        serde -> configured(serde.serializer()),
+                        serde -> createLargeMessageSerializer(serde, 0),
+                        serde -> createLargeMessageSerializer(serde, Integer.MAX_VALUE)
                 )
-                .map(f -> f.apply(t))
+                .map(f -> f.apply(baseSerde))
                 .map(Arguments::of);
     }
 
