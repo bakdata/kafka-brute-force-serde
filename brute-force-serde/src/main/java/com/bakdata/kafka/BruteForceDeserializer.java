@@ -107,13 +107,13 @@ public class BruteForceDeserializer implements Deserializer<Object> {
 
     @Override
     public Object deserialize(final String topic, final byte[] data) {
-        Objects.requireNonNull(this.deserializers);
+        Objects.requireNonNull(this.deserializers, "You need to configure the deserializer first");
         for (final Deserializer<Object> deserializer : this.deserializers) {
             final Class<? extends Deserializer> clazz = deserializer.getClass();
             try {
-                final Object t = deserializer.deserialize(topic, data);
+                final Object value = deserializer.deserialize(topic, data);
                 log.trace("Deserialized message using {}", clazz);
-                return t;
+                return value;
             } catch (final RuntimeException ex) {
                 log.trace(String.format("Failed deserializing message using %s", clazz), ex);
             }

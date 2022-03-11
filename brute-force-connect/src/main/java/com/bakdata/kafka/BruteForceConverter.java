@@ -107,13 +107,13 @@ public class BruteForceConverter implements Converter {
 
     @Override
     public SchemaAndValue toConnectData(final String topic, final byte[] value) {
-        Objects.requireNonNull(this.converters);
+        Objects.requireNonNull(this.converters, "You need to configure the converter first");
         for (final Converter converter : this.converters) {
             final Class<? extends Converter> clazz = converter.getClass();
             try {
-                final SchemaAndValue s = converter.toConnectData(topic, value);
+                final SchemaAndValue schemaAndValue = converter.toConnectData(topic, value);
                 log.trace("Converted message using {}", clazz);
-                return s;
+                return schemaAndValue;
             } catch (final RuntimeException ex) {
                 log.trace(String.format("Failed converting message using %s", clazz), ex);
             }
