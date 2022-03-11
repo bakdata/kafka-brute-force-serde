@@ -6,7 +6,7 @@ trigger:
 pr:
   branches:
     include:
-    - master
+    - main
     
 variables:
 - group: sonarqube

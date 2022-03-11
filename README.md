@@ -109,5 +109,5 @@ Just open an issue beforehand and let us know what you want to do and why.
 
 ## License
 This project is licensed under the MIT license.
-Have a look at the [LICENSE](https://github.com/bakdata/kafka-brute-force-serde/blob/master/LICENSE) for more details.
+Have a look at the [LICENSE](https://github.com/bakdata/kafka-brute-force-serde/blob/main/LICENSE) for more details.
 
