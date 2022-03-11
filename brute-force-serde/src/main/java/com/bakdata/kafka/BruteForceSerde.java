@@ -51,6 +51,9 @@ public class BruteForceSerde implements Serde<Object> {
     @Delegate
     private final Serde<Object> inner;
 
+    /**
+     * Default constructor
+     */
     public BruteForceSerde() {
         final Serializer<Object> serializer = new BruteForceSerializer<>();
         final Deserializer<Object> deserializer = new BruteForceDeserializer();

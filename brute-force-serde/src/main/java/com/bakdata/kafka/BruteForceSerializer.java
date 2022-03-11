@@ -32,6 +32,8 @@ import org.apache.kafka.common.serialization.Serializer;
 /**
  * Kafka {@code Deserializer} used by {@link BruteForceSerde}. This serializer cannot be used to serialize any
  * messages.
+ *
+ * @param <T> type of records that can be serialized by this instance
  */
 @NoArgsConstructor
 public class BruteForceSerializer<T> implements Serializer<T> {
