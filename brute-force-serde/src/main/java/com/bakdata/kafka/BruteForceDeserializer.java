@@ -115,7 +115,7 @@ public class BruteForceDeserializer implements Deserializer<Object> {
                 log.trace("Deserialized message using {}", clazz);
                 return value;
             } catch (final RuntimeException ex) {
-                log.trace(String.format("Failed deserializing message using %s", clazz), ex);
+                log.trace("Failed deserializing message using {}", clazz, ex);
             }
         }
         throw new IllegalStateException("Deserialization should have worked with " + ByteArrayDeserializer.class);

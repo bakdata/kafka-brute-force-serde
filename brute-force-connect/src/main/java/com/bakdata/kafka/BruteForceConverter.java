@@ -115,7 +115,7 @@ public class BruteForceConverter implements Converter {
                 log.trace("Converted message using {}", clazz);
                 return schemaAndValue;
             } catch (final RuntimeException ex) {
-                log.trace(String.format("Failed converting message using %s", clazz), ex);
+                log.trace("Failed converting message using {}", clazz, ex);
             }
         }
         throw new IllegalStateException("Conversion should have worked with " + ByteArrayConverter.class);
