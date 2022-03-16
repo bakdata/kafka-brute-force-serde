@@ -115,7 +115,7 @@ class BruteForceConverterTest {
         );
     }
 
-    private static <T> SerializerFactory<T> configured(            final Serializer<T> serializer) {
+    private static <T> SerializerFactory<T> configured(final Serializer<T> serializer) {
         return (config, isKey) -> {
             serializer.configure(config, isKey);
             return serializer;
