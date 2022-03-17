@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "Id",
+  "namespace": "com.bakdata",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string"
+    }
+  ]
+}
