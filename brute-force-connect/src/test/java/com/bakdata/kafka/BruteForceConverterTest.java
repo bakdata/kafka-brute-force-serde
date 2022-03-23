@@ -44,6 +44,8 @@ import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.kafka.common.errors.SerializationException;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -92,7 +94,8 @@ class BruteForceConverterTest {
         return new StringConverter().toConnectData(null, text.getBytes());
     }
 
-    private static <T> SerializerFactory<T> createLargeMessageSerializer(final Serde<T> inner, final int maxSize) {
+    private static <T> SerializerFactory<T> createLargeMessageSerializer(final Serde<T> inner, final int maxSize,
+            final boolean useHeaders) {
         return (originals, isKey) -> {
             final Serializer<T> serde = new LargeMessageSerializer<>();
             final Map<String, Object> configs = new HashMap<>(originals);
@@ -100,6 +103,7 @@ class BruteForceConverterTest {
             configs.put(isKey ? LargeMessageSerdeConfig.KEY_SERDE_CLASS_CONFIG
                     : LargeMessageSerdeConfig.VALUE_SERDE_CLASS_CONFIG, inner.getClass());
             configs.put(AbstractLargeMessageConfig.MAX_BYTE_SIZE_CONFIG, maxSize);
+            configs.put(AbstractLargeMessageConfig.USE_HEADERS_CONFIG, useHeaders);
             serde.configure(configs, isKey);
             return serde;
         };
@@ -125,8 +129,10 @@ class BruteForceConverterTest {
     private static <T> Stream<Arguments> generateSerializers(final Serde<T> baseSerde) {
         return Stream.<Function<Serde<T>, SerializerFactory<T>>>of(
                         serde -> configured(serde.serializer()),
-                        serde -> createLargeMessageSerializer(serde, 0),
-                        serde -> createLargeMessageSerializer(serde, Integer.MAX_VALUE)
+                        serde -> createLargeMessageSerializer(serde, 0, false),
+                        serde -> createLargeMessageSerializer(serde, Integer.MAX_VALUE, false),
+                        serde -> createLargeMessageSerializer(serde, 0, true),
+                        serde -> createLargeMessageSerializer(serde, Integer.MAX_VALUE, true)
                 )
                 .map(f -> f.apply(baseSerde))
                 .map(Arguments::of);
@@ -210,15 +216,17 @@ class BruteForceConverterTest {
         config.putAll(getS3EndpointConfig());
 
         final Serializer<T> serializer = factory.create(config, isKey);
-        final byte[] bytes = serializer.serialize(TOPIC, value);
+        final Headers headers = new RecordHeaders();
+        final byte[] bytes = serializer.serialize(TOPIC, headers, value);
         final Converter converter = new BruteForceConverter();
         converter.configure(config, isKey);
-        final SchemaAndValue schemaAndValue = converter.toConnectData(TOPIC, bytes);
+        final SchemaAndValue schemaAndValue = converter.toConnectData(TOPIC, headers, bytes);
 
+        final Headers expectedHeaders = new RecordHeaders();
         expectedSerializer.configure(config, isKey);
-        final byte[] expectedBytes = expectedSerializer.serialize(TOPIC, value);
+        final byte[] expectedBytes = expectedSerializer.serialize(TOPIC, expectedHeaders, value);
         expectedConverter.configure(config, isKey);
-        final SchemaAndValue expected = expectedConverter.toConnectData(TOPIC, expectedBytes);
+        final SchemaAndValue expected = expectedConverter.toConnectData(TOPIC, expectedHeaders, expectedBytes);
 
         assertThat(schemaAndValue.schema()).isEqualTo(expected.schema());
         assertThat(schemaAndValue.value()).isEqualTo(expected.value());

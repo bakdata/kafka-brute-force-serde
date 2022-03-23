@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
@@ -105,13 +107,23 @@ public class BruteForceDeserializer implements Deserializer<Object> {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * @since 1.1.0
+     * @deprecated Use {@link Deserializer#deserialize(String, Headers, byte[])}
+     */
     @Override
+    @Deprecated(since = "1.1.0")
     public Object deserialize(final String topic, final byte[] data) {
+        return this.deserialize(topic, new RecordHeaders(), data);
+    }
+
+    @Override
+    public Object deserialize(final String topic, final Headers headers, final byte[] data) {
         Objects.requireNonNull(this.deserializers, "You need to configure the deserializer first");
         for (final Deserializer<Object> deserializer : this.deserializers) {
             final Class<? extends Deserializer> clazz = deserializer.getClass();
             try {
-                final Object value = deserializer.deserialize(topic, data);
+                final Object value = deserializer.deserialize(topic, headers, data);
                 log.trace("Deserialized message using {}", clazz);
                 return value;
             } catch (final RuntimeException ex) {
