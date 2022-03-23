@@ -222,10 +222,11 @@ class BruteForceConverterTest {
         converter.configure(config, isKey);
         final SchemaAndValue schemaAndValue = converter.toConnectData(TOPIC, headers, bytes);
 
+        final Headers expectedHeaders = new RecordHeaders();
         expectedSerializer.configure(config, isKey);
-        final byte[] expectedBytes = expectedSerializer.serialize(TOPIC, headers, value);
+        final byte[] expectedBytes = expectedSerializer.serialize(TOPIC, expectedHeaders, value);
         expectedConverter.configure(config, isKey);
-        final SchemaAndValue expected = expectedConverter.toConnectData(TOPIC, headers, expectedBytes);
+        final SchemaAndValue expected = expectedConverter.toConnectData(TOPIC, expectedHeaders, expectedBytes);
 
         assertThat(schemaAndValue.schema()).isEqualTo(expected.schema());
         assertThat(schemaAndValue.value()).isEqualTo(expected.value());
