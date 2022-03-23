@@ -90,8 +90,10 @@ class BruteForceDeserializerTest {
     private static <T> Stream<Arguments> generateSerdes(final Serde<T> baseSerde) {
         return Stream.<Function<Serde<T>, SerdeFactory<T>>>of(
                         BruteForceDeserializerTest::configured,
-                        serde -> createLargeMessageSerde(serde, 0),
-                        serde -> createLargeMessageSerde(serde, Integer.MAX_VALUE)
+                        serde -> createLargeMessageSerde(serde, 0, false),
+                        serde -> createLargeMessageSerde(serde, Integer.MAX_VALUE, false),
+                        serde -> createLargeMessageSerde(serde, 0, true),
+                        serde -> createLargeMessageSerde(serde, Integer.MAX_VALUE, true)
                 )
                 .map(f -> f.apply(baseSerde))
                 .map(Arguments::of);
@@ -137,7 +139,8 @@ class BruteForceDeserializerTest {
         return builder.build();
     }
 
-    private static <T> SerdeFactory<T> createLargeMessageSerde(final Serde<T> inner, final int maxSize) {
+    private static <T> SerdeFactory<T> createLargeMessageSerde(final Serde<T> inner, final int maxSize,
+            final boolean useHeaders) {
         return (originals, isKey) -> {
             final Serde<T> serde = new LargeMessageSerde<>();
             final Map<String, Object> configs = new HashMap<>(originals);
@@ -145,6 +148,7 @@ class BruteForceDeserializerTest {
             configs.put(isKey ? LargeMessageSerdeConfig.KEY_SERDE_CLASS_CONFIG
                     : LargeMessageSerdeConfig.VALUE_SERDE_CLASS_CONFIG, inner.getClass());
             configs.put(AbstractLargeMessageConfig.MAX_BYTE_SIZE_CONFIG, maxSize);
+            configs.put(AbstractLargeMessageConfig.USE_HEADERS_CONFIG, useHeaders);
             serde.configure(configs, isKey);
             return serde;
         };

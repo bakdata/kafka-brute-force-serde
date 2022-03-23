@@ -38,6 +38,8 @@ import java.util.stream.Stream;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.SerializationException;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.connect.converters.ByteArrayConverter;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaAndValue;
@@ -105,13 +107,23 @@ public class BruteForceConverter implements Converter {
                 BruteForceConverter.class.getSimpleName() + " only supports converting to connect data");
     }
 
+    /**
+     * @since 1.1.0
+     * @deprecated Use {@link Converter#toConnectData(String, Headers, byte[])}
+     */
     @Override
+    @Deprecated
     public SchemaAndValue toConnectData(final String topic, final byte[] value) {
+        return this.toConnectData(topic, new RecordHeaders(), value);
+    }
+
+    @Override
+    public SchemaAndValue toConnectData(final String topic, final Headers headers, final byte[] value) {
         Objects.requireNonNull(this.converters, "You need to configure the converter first");
         for (final Converter converter : this.converters) {
             final Class<? extends Converter> clazz = converter.getClass();
             try {
-                final SchemaAndValue schemaAndValue = converter.toConnectData(topic, value);
+                final SchemaAndValue schemaAndValue = converter.toConnectData(topic, headers, value);
                 log.trace("Converted message using {}", clazz);
                 return schemaAndValue;
             } catch (final RuntimeException ex) {
