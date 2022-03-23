@@ -112,7 +112,7 @@ public class BruteForceDeserializer implements Deserializer<Object> {
      * @deprecated Use {@link Deserializer#deserialize(String, Headers, byte[])}
      */
     @Override
-    @Deprecated
+    @Deprecated(since = "1.1.0")
     public Object deserialize(final String topic, final byte[] data) {
         return this.deserialize(topic, new RecordHeaders(), data);
     }

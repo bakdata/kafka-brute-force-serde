@@ -112,7 +112,7 @@ public class BruteForceConverter implements Converter {
      * @deprecated Use {@link Converter#toConnectData(String, Headers, byte[])}
      */
     @Override
-    @Deprecated
+    @Deprecated(since = "1.1.0")
     public SchemaAndValue toConnectData(final String topic, final byte[] value) {
         return this.toConnectData(topic, new RecordHeaders(), value);
     }
