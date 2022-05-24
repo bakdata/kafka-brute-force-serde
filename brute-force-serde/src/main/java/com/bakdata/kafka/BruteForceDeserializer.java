@@ -44,7 +44,6 @@ import org.apache.kafka.common.serialization.Serde;
  * <p>
  * The {@link Deserializer} to test can be configured through {@link BruteForceSerdeConfig}. If support for
  * large-message-serde is enabled, all configured deserializers are first tested with {@link LargeMessageDeserializer}.
- * </p>
  */
 @NoArgsConstructor
 @Slf4j

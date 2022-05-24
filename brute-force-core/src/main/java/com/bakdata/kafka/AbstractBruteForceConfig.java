@@ -43,7 +43,6 @@ import org.apache.kafka.common.utils.Utils;
  *      <li>toggle support for large message</li>
  *      <li>toggle if no matches should lead to an exception</li>
  *  </ul>
- * </p>
  */
 public class AbstractBruteForceConfig extends AbstractConfig {
     public static final String PREFIX = "brute.force.";
@@ -84,7 +83,6 @@ public class AbstractBruteForceConfig extends AbstractConfig {
      * <p>
      * Compared to {@link #getConfiguredInstances(String, Class)}, this method doesn't call
      * {@link org.apache.kafka.common.Configurable#configure(Map)}. This allows to defer the configuration.
-     * </p>
      *
      * @param config key for the list of classes
      * @param baseClazz base class for all instances

@@ -40,7 +40,6 @@ import org.apache.kafka.connect.storage.Converter;
  * <ul>
  *     <li>a list of {@link Converter} that should be tried during the brute-force</li>
  * </ul>
- * </p>
  *
  * See {@link AbstractBruteForceConfig} for more configuration options.
  */

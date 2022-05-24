@@ -42,7 +42,6 @@ import org.apache.kafka.common.serialization.Serdes.StringSerde;
  * <ul>
  *     <li>a list of {@link Serde} that should tried during the brute-force</li>
  * </ul>
- * </p>
  *
  * See {@link AbstractBruteForceConfig} for more configuration options.
  */
