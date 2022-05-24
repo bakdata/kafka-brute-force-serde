@@ -30,7 +30,7 @@ For other build tools or versions, refer to the [latest version in MvnRepository
 
 Make sure to also add [Confluent Maven Repository](http://packages.confluent.io/maven/) to your build file.
 
-### Usage
+#### Usage
 
 You can use it from your Kafka Streams application like any other Serde
 
@@ -77,9 +77,9 @@ For other build tools or versions, refer to the [latest version in MvnRepository
 To use it with your Kafka Connect connectors, just configure your converter as `com.bakdata.kafka.BruteForceConverter`.
 
 Byte default, the converter attempts to deserialize messages using the following converters in this order:
-- `AvroConverter`
-- `StringConverter`
-- `ByteArrayConverter`
+- AvroConverter
+- StringConverter
+- ByteArrayConverter
 
 For each serialization format, BruteForceSerde first attempts deserialization using [Kafka Large Message Converter](https://github.com/bakdata/kafka-large-message-serde/)
 and then uses the standard format.
