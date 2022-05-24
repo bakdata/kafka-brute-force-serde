@@ -24,16 +24,10 @@
 
 package com.bakdata.kafka;
 
-import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.NoArgsConstructor;
@@ -43,8 +37,6 @@ import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes.ByteArraySerde;
-import org.apache.kafka.common.serialization.Serdes.StringSerde;
 
 /**
  * Kafka {@code Deserializer} that deserializes messages of an unknown serialization format.
@@ -64,14 +56,18 @@ import org.apache.kafka.common.serialization.Serdes.StringSerde;
 @Slf4j
 public class BruteForceDeserializer implements Deserializer<Object> {
 
-    private static final List<Supplier<Serde<?>>> DEFAULT_FACTORIES = List.of(
-            StringSerde::new,
-            ByteArraySerde::new
-    );
-    private List<Deserializer<Object>> deserializers;
+    private List<Deserializer<?>> deserializers;
+
+    private static LargeMessageDeserializer<Object> createLargeMessageDeserializer(final Map<String, ?> configs,
+            final boolean isKey, final Serde<?> serde) {
+        final LargeMessageDeserializer<Object> largeMessageDeserializer = new LargeMessageDeserializer<>();
+        final Map<String, Object> config = createLargeMessageConfig(configs, isKey, serde);
+        largeMessageDeserializer.configure(config, isKey);
+        return largeMessageDeserializer;
+    }
 
     private static Map<String, Object> createLargeMessageConfig(final Map<String, ?> configs, final boolean isKey,
-            final Serde<Object> serde) {
+            final Serde<?> serde) {
         final Map<String, Object> conf = new HashMap<>(configs);
         conf.put(isKey ? LargeMessageSerdeConfig.KEY_SERDE_CLASS_CONFIG
                         : LargeMessageSerdeConfig.VALUE_SERDE_CLASS_CONFIG,
@@ -79,33 +75,25 @@ public class BruteForceDeserializer implements Deserializer<Object> {
         return conf;
     }
 
-    private static Stream<Deserializer<Object>> createDeserializers(final Map<String, ?> configs, final boolean isKey,
-            final Supplier<Serde<?>> factory) {
-        final Serde<Object> serde = (Serde<Object>) factory.get();
-        final Deserializer<Object> deserializer = serde.deserializer();
-        deserializer.configure(configs, isKey);
-        final Deserializer<Object> largeMessageDeserializer = new LargeMessageDeserializer<>();
-        final Map<String, Object> largeMessageConfigs = createLargeMessageConfig(configs, isKey, serde);
-        largeMessageDeserializer.configure(largeMessageConfigs, isKey);
-        return Stream.of(largeMessageDeserializer, deserializer);
-    }
-
-    private static Stream<Supplier<Serde<?>>> getFactories(final Map<String, ?> configs) {
-        final Collection<Supplier<Serde<?>>> factories = new ArrayList<>();
-        if (configs.containsKey(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG)) {
-            factories.add(SpecificAvroSerde::new);
-            factories.add(GenericAvroSerde::new);
-        }
-        factories.addAll(DEFAULT_FACTORIES);
-        return factories.stream();
-    }
-
     @Override
     public void configure(final Map<String, ?> configs, final boolean isKey) {
-        this.deserializers = getFactories(configs)
-                .flatMap(factory -> createDeserializers(configs, isKey, factory))
-                .collect(Collectors.toList());
+        final BruteForceSerdeConfig serdeConfig = new BruteForceSerdeConfig(configs);
+        final Stream<Serde<?>> serdeStream = serdeConfig.getSerdes().stream()
+                .peek(serde -> serde.configure(configs, isKey));
+
+        final Stream<Deserializer<?>> deserializerStream;
+        if (serdeConfig.isLargeMessageEnabled()) {
+            // create interleaved stream, i.e., LargeMessage of Serde A, Serde A, LargeMessage of Serde B, Serde B...
+            deserializerStream = serdeStream.flatMap(serde -> Stream.of(
+                    createLargeMessageDeserializer(configs, isKey, serde),
+                    serde.deserializer()
+            ));
+        } else {
+            deserializerStream = serdeStream.map(Serde::deserializer);
+        }
+        this.deserializers = deserializerStream.collect(Collectors.toList());
     }
+
 
     /**
      * @since 1.1.0
@@ -120,7 +108,7 @@ public class BruteForceDeserializer implements Deserializer<Object> {
     @Override
     public Object deserialize(final String topic, final Headers headers, final byte[] data) {
         Objects.requireNonNull(this.deserializers, "You need to configure the deserializer first");
-        for (final Deserializer<Object> deserializer : this.deserializers) {
+        for (final Deserializer<?> deserializer : this.deserializers) {
             final Class<? extends Deserializer> clazz = deserializer.getClass();
             try {
                 final Object value = deserializer.deserialize(topic, headers, data);

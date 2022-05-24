@@ -5,6 +5,8 @@ plugins {
 }
 
 dependencies {
+    api(project(":brute-force-core"))
+
     val kafkaVersion: String by project
     api(group = "org.apache.kafka", name = "kafka-clients", version = kafkaVersion)
     val largeMessageVersion: String by project

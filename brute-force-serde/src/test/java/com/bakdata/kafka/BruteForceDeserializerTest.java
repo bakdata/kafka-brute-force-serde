@@ -133,7 +133,7 @@ class BruteForceDeserializerTest {
         final Serde<Object> serde = new BruteForceSerde();
         serde.configure(new StreamsConfig(properties).originals(), true);
         final KStream<Object, Integer> input = builder.stream(INPUT_TOPIC, Consumed.<Object, Integer>with(serde, null))
-                //force usage of default serde. Otherwise, consumed serde would be used for serialization
+                // force usage of default serde. Otherwise, consumed serde would be used for serialization
                 .map(KeyValue::new);
         input.to(OUTPUT_TOPIC);
         return builder.build();

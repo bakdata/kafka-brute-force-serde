@@ -8,14 +8,15 @@ import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes.ByteArraySerde;
 import org.apache.kafka.common.serialization.Serdes.StringSerde;
 
-public class BruteForceSerdeConfig extends BruteForceConfig {
+public class BruteForceSerdeConfig extends AbstractBruteForceConfig {
 
     public static final String DESERIALIZERS_CONFIG = PREFIX + "deserializers";
-    public static final String DESERIALIZERS_DOC = "A comma separated list of classes that the SerDe should try";
+    public static final String DESERIALIZERS_DOC = "A comma separated list SerDes that should be tried.";
 
     public static final List<String> DESERIALIZERS_DEFAULT = List.of(
             SpecificAvroSerde.class.getName(),
@@ -24,7 +25,7 @@ public class BruteForceSerdeConfig extends BruteForceConfig {
             ByteArraySerde.class.getName()
     );
 
-    public static final ConfigDef config = configDef();
+    public static final ConfigDef CONFIG = configDef();
 
     private static ConfigDef configDef() {
         return baseConfigDef()
@@ -32,10 +33,13 @@ public class BruteForceSerdeConfig extends BruteForceConfig {
     }
 
     public BruteForceSerdeConfig(final Map<?, ?> originals) {
-        super(config, originals);
+        super(CONFIG, originals);
     }
 
-    public List<Serde> getSerdes() {
-        return this.getConfiguredInstances(DESERIALIZERS_CONFIG, Serde.class);
+    public List<Serde<?>> getSerdes() {
+        return this.getConfiguredInstances(DESERIALIZERS_CONFIG, Serde.class).stream()
+                .map(serde -> (Serde<?>) serde)
+                .collect(Collectors.toList());
     }
+
 }
