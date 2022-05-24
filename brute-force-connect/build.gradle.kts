@@ -1,6 +1,8 @@
 description = "Kafka Connect Converter that deserializes messages of an unknown serialization format"
 
 dependencies {
+    api(project(":brute-force-core"))
+
     val kafkaVersion: String by project
     api(group = "org.apache.kafka", name = "connect-api", version = kafkaVersion)
     compileOnly(group = "org.apache.kafka", name = "connect-runtime", version = kafkaVersion)

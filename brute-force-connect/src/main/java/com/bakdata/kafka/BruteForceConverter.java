@@ -25,14 +25,10 @@
 package com.bakdata.kafka;
 
 import io.confluent.connect.avro.AvroConverter;
-import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.NoArgsConstructor;
@@ -61,21 +57,15 @@ import org.apache.kafka.connect.storage.StringConverter;
 @NoArgsConstructor
 @Slf4j
 public class BruteForceConverter implements Converter {
-    private static final List<Supplier<Converter>> DEFAULT_FACTORIES = List.of(
-            StringConverter::new,
-            ByteArrayConverter::new
-    );
 
     private List<Converter> converters;
 
-    private static Stream<Converter> createConverters(final Map<String, ?> configs, final boolean isKey,
-            final Supplier<? extends Converter> factory) {
-        final Converter converter = factory.get();
-        converter.configure(configs, isKey);
+    private static Converter createLargeMessageConverters(final Map<String, ?> configs, final boolean isKey,
+            final Converter converter) {
         final Converter largeMessageConverter = new LargeMessageConverter();
         final Map<String, Object> largeMessageConfigs = createLargeMessageConfig(configs, converter);
         largeMessageConverter.configure(largeMessageConfigs, isKey);
-        return Stream.of(largeMessageConverter, converter);
+        return largeMessageConverter;
     }
 
     private static Map<String, Object> createLargeMessageConfig(final Map<String, ?> configs,
@@ -85,20 +75,20 @@ public class BruteForceConverter implements Converter {
         return conf;
     }
 
-    private static Stream<Supplier<Converter>> getFactories(final Map<String, ?> configs) {
-        final Collection<Supplier<Converter>> factories = new ArrayList<>();
-        if (configs.containsKey(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG)) {
-            factories.add(AvroConverter::new);
-        }
-        factories.addAll(DEFAULT_FACTORIES);
-        return factories.stream();
-    }
-
     @Override
     public void configure(final Map<String, ?> configs, final boolean isKey) {
-        this.converters = getFactories(configs)
-                .flatMap(factory -> createConverters(configs, isKey, factory))
-                .collect(Collectors.toList());
+        final BruteForceConverterConfig bruteForceConfig = new BruteForceConverterConfig(configs);
+        Stream<Converter> converterStream = bruteForceConfig.getConverters().stream()
+                .peek(converter -> converter.configure(configs, isKey));
+
+        if (bruteForceConfig.isLargeMessageEnabled()) {
+            converterStream = converterStream.flatMap(converter -> Stream.of(
+                    createLargeMessageConverters(configs, isKey, converter),
+                    converter
+            ));
+        }
+
+        this.converters = converterStream.collect(Collectors.toList());
     }
 
     @Override
