@@ -1,7 +1,4 @@
 dependencies {
-    val confluentVersion: String by project
-    api(group = "io.confluent", name = "common-config", version = confluentVersion)
-
     val kafkaVersion: String by project
     api(group = "org.apache.kafka", name = "kafka-clients", version = kafkaVersion)
 

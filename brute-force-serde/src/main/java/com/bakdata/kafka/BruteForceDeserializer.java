@@ -32,33 +32,28 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 
 /**
  * Kafka {@code Deserializer} that deserializes messages of an unknown serialization format.
+ *
  * <p>
- * Each serialization format that is tested for deserialization is first applied using {@link LargeMessageDeserializer}
- * and then using the standard serialization format. This serde tests the following format in this order:
- * <ul>
- *     <li>{@link io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer} (if {@code schema.registry.url} is
- *     present in the serde configuration</li>
- *     <li>{@link io.confluent.kafka.streams.serdes.avro.GenericAvroDeserializer} (if {@code schema.registry.url} is
- *     present in the serde configuration</li>
- *     <li>{@link org.apache.kafka.common.serialization.StringDeserializer}</li>
- *     <li>{@link ByteArrayDeserializer}</li>
- * </ul>
+ * The {@link Deserializer} to test can be configured through {@link BruteForceSerdeConfig}. If support for
+ * large-message-serde is enabled, all configured deserializers are first tested with {@link LargeMessageDeserializer}.
+ * </p>
  */
 @NoArgsConstructor
 @Slf4j
 public class BruteForceDeserializer implements Deserializer<Object> {
 
     private List<Deserializer<?>> deserializers;
+    private boolean ignoreNoMatch;
 
-    private static LargeMessageDeserializer<Object> createLargeMessageDeserializer(final Map<String, ?> configs,
+    private static LargeMessageDeserializer<?> createLargeMessageDeserializer(final Map<String, ?> configs,
             final boolean isKey, final Serde<?> serde) {
         final LargeMessageDeserializer<Object> largeMessageDeserializer = new LargeMessageDeserializer<>();
         final Map<String, Object> config = createLargeMessageConfig(configs, isKey, serde);
@@ -78,11 +73,12 @@ public class BruteForceDeserializer implements Deserializer<Object> {
     @Override
     public void configure(final Map<String, ?> configs, final boolean isKey) {
         final BruteForceSerdeConfig serdeConfig = new BruteForceSerdeConfig(configs);
+        this.ignoreNoMatch = serdeConfig.ignoreNoMatch();
         final Stream<Serde<?>> serdeStream = serdeConfig.getSerdes().stream()
                 .peek(serde -> serde.configure(configs, isKey));
 
         final Stream<Deserializer<?>> deserializerStream;
-        if (serdeConfig.isLargeMessageEnabled()) {
+        if (serdeConfig.largeMessageEnabled()) {
             // create interleaved stream, i.e., LargeMessage of Serde A, Serde A, LargeMessage of Serde B, Serde B...
             deserializerStream = serdeStream.flatMap(serde -> Stream.of(
                     createLargeMessageDeserializer(configs, isKey, serde),
@@ -118,7 +114,17 @@ public class BruteForceDeserializer implements Deserializer<Object> {
                 log.trace("Failed deserializing message using {}", clazz, ex);
             }
         }
-        throw new IllegalStateException("Deserialization should have worked with " + ByteArrayDeserializer.class);
+
+        if (this.ignoreNoMatch) {
+            log.info("No deserializer matched for data in topic {}. Falling back to a byte array.", topic);
+            return data;
+        }
+
+        final String errorMessage = String.format("No deserializer in [%s] was able to deserialize the data",
+                this.deserializers.stream()
+                        .map(deserializer -> deserializer.getClass().getSimpleName())
+                        .collect(Collectors.joining(", ")));
+        throw new SerializationException(errorMessage);
     }
 
     @Override

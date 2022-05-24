@@ -31,14 +31,32 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.adobe.testing.s3mock.junit5.S3MockExtension;
-import com.bakdata.schemaregistrymock.junit5.SchemaRegistryMockExtension;
+import com.bakdata.schemaregistrymock.SchemaRegistryMock;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.DescriptorValidationException;
+import com.google.protobuf.DynamicMessage;
 import io.confluent.connect.avro.AvroConverter;
+import io.confluent.connect.json.JsonSchemaConverter;
+import io.confluent.connect.protobuf.ProtobufConverter;
+import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
+import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
+import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
+import io.confluent.kafka.schemaregistry.protobuf.dynamic.DynamicSchema;
+import io.confluent.kafka.schemaregistry.protobuf.dynamic.MessageDefinition;
+import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
+import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerializer;
+import io.confluent.kafka.streams.serdes.json.KafkaJsonSchemaSerde;
+import io.confluent.kafka.streams.serdes.protobuf.KafkaProtobufSerde;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
@@ -55,6 +73,8 @@ import org.apache.kafka.connect.converters.ByteArrayConverter;
 import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.storage.Converter;
 import org.apache.kafka.connect.storage.StringConverter;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -65,8 +85,11 @@ class BruteForceConverterTest {
     @RegisterExtension
     static final S3MockExtension S3_MOCK = S3MockExtension.builder().silent().withSecureConnection(false).build();
     private static final String TOPIC = "topic";
-    @RegisterExtension
-    final SchemaRegistryMockExtension schemaRegistry = new SchemaRegistryMockExtension();
+    final SchemaRegistryMock schemaRegistry = new SchemaRegistryMock(List.of(
+            new AvroSchemaProvider(),
+            new JsonSchemaProvider(),
+            new ProtobufSchemaProvider()
+    ));
 
     static Stream<Arguments> generateGenericAvroSerializers() {
         return generateSerializers(new GenericAvroSerde());
@@ -80,6 +103,14 @@ class BruteForceConverterTest {
         return generateSerializers(Serdes.ByteArray());
     }
 
+    static Stream<Arguments> generateJsonSerializers() {
+        return generateSerializers(new KafkaJsonSchemaSerde<>());
+    }
+
+    static Stream<Arguments> generateProtobufSerializers() {
+        return generateSerializers(new KafkaProtobufSerde<>());
+    }
+
     static GenericRecord newGenericRecord() {
         final Schema schema = SchemaBuilder.record("MyRecord")
                 .fields()
@@ -87,6 +118,19 @@ class BruteForceConverterTest {
                 .endRecord();
         return new GenericRecordBuilder(schema)
                 .set("id", "foo")
+                .build();
+    }
+
+    private static DynamicMessage generateDynamicMessage() throws DescriptorValidationException {
+        final DynamicSchema dynamicSchema = DynamicSchema.newBuilder()
+                .setName("file")
+                .addMessageDefinition(MessageDefinition.newBuilder("Test")
+                        .addField("", "string", "testId", 1, null, null, null)
+                        .build())
+                .build();
+        final Descriptor test = dynamicSchema.getMessageDescriptor("Test");
+        return DynamicMessage.newBuilder(test)
+                .setField(test.findFieldByName("testId"), "test")
                 .build();
     }
 
@@ -138,6 +182,38 @@ class BruteForceConverterTest {
                 .map(Arguments::of);
     }
 
+    @BeforeEach
+    void setUp() {
+        this.schemaRegistry.start();
+    }
+
+    @AfterEach
+    void tearDown() {
+        this.schemaRegistry.stop();
+    }
+
+    @Test
+    void shouldIgnoreNoMatch() {
+        final byte[] value = {1, 0};
+        final Map<String, Object> config = Map.of(BruteForceConverterConfig.CONVERTER_CONFIG, List.of());
+        this.testValueConversion(configured(new ByteArraySerializer()), new ByteArraySerializer(), value, config,
+                new ByteArrayConverter());
+    }
+
+    @Test
+    void shouldFailIfIgnoreNoMatchIsDisabled() {
+        final byte[] value = {1, 0};
+        final Map<String, Object> config =
+                Map.of(BruteForceConverterConfig.CONVERTER_CONFIG, List.of(AvroConverter.class.getName()),
+                        AbstractBruteForceConfig.IGNORE_NO_MATCH_CONFIG, false);
+        assertThatExceptionOfType(SerializationException.class)
+                .isThrownBy(
+                        () -> this.testValueConversion(configured(new ByteArraySerializer()), new ByteArraySerializer(),
+                                value, config, new ByteArrayConverter()))
+                .withMessage("No converter in [LargeMessageConverter, AvroConverter] was able to "
+                        + "deserialize the data");
+    }
+
     @ParameterizedTest
     @MethodSource("generateStringSerializers")
     void shouldConvertStringValues(final SerializerFactory<String> factory) {
@@ -180,6 +256,52 @@ class BruteForceConverterTest {
         final byte[] value = {1, 0};
         final Map<String, Object> config = Map.of(ENCODING_CONFIG, "missing");
         this.testKeyConversion(factory, new ByteArraySerializer(), value, config, new ByteArrayConverter());
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateProtobufSerializers")
+    void shouldConvertJsonKeys(final SerializerFactory<DynamicMessage> factory) throws DescriptorValidationException {
+        final DynamicMessage value = generateDynamicMessage();
+        final Map<String, Object> config = Map.of(
+                BruteForceConverterConfig.CONVERTER_CONFIG,
+                List.of(AvroConverter.class.getName(), ProtobufConverter.class.getName())
+        );
+        this.testValueConversion(factory, new KafkaProtobufSerializer<>(), value, config, new ProtobufConverter());
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateJsonSerializers")
+    void shouldConvertJsonValues(final SerializerFactory<JsonTestRecord> factory) {
+        final JsonTestRecord value = new JsonTestRecord("test");
+        final Map<String, Object> config = Map.of(
+                BruteForceConverterConfig.CONVERTER_CONFIG,
+                List.of(AvroConverter.class.getName(), JsonSchemaConverter.class.getName())
+        );
+        this.testValueConversion(factory, new KafkaJsonSchemaSerializer<>(), value, config, new JsonSchemaConverter());
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateProtobufSerializers")
+    void shouldConvertProtobufKeys(final SerializerFactory<DynamicMessage> factory)
+            throws DescriptorValidationException {
+        final DynamicMessage value = generateDynamicMessage();
+        final Map<String, Object> config = Map.of(
+                BruteForceConverterConfig.CONVERTER_CONFIG,
+                List.of(AvroConverter.class.getName(), ProtobufConverter.class.getName())
+        );
+        this.testKeyConversion(factory, new KafkaProtobufSerializer<>(), value, config, new ProtobufConverter());
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateProtobufSerializers")
+    void shouldConvertProtobufValues(final SerializerFactory<DynamicMessage> factory)
+            throws DescriptorValidationException {
+        final DynamicMessage value = generateDynamicMessage();
+        final Map<String, Object> config = Map.of(
+                BruteForceConverterConfig.CONVERTER_CONFIG,
+                List.of(AvroConverter.class.getName(), ProtobufConverter.class.getName())
+        );
+        this.testValueConversion(factory, new KafkaProtobufSerializer<>(), value, config, new ProtobufConverter());
     }
 
     @Test
@@ -236,5 +358,13 @@ class BruteForceConverterTest {
     private interface SerializerFactory<T> {
 
         Serializer<T> create(Map<String, Object> config, boolean isKey);
+    }
+
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    private static class JsonTestRecord {
+        private String name;
     }
 }

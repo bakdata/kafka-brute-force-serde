@@ -26,24 +26,36 @@ package com.bakdata.kafka;
 
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.adobe.testing.s3mock.junit5.S3MockExtension;
 import com.bakdata.Id;
 import com.bakdata.fluent_kafka_streams_tests.TestTopology;
+import com.bakdata.kafka.Test.ProtobufRecord;
+import com.bakdata.schemaregistrymock.SchemaRegistryMock;
+import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
+import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
+import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
+import io.confluent.kafka.streams.serdes.json.KafkaJsonSchemaSerde;
+import io.confluent.kafka.streams.serdes.protobuf.KafkaProtobufSerde;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.specific.SpecificRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serdes.IntegerSerde;
@@ -52,6 +64,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.errors.StreamsException;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.jooq.lambda.Seq;
@@ -69,7 +82,7 @@ class BruteForceDeserializerTest {
 
     private static final String INPUT_TOPIC = "input";
     private static final String OUTPUT_TOPIC = "output";
-    private TestTopology<Object, SpecificRecord> topology = null;
+    private TestTopology<Object, Object> topology = null;
 
     static Stream<Arguments> generateSpecificAvroSerdes() {
         return generateSerdes(new SpecificAvroSerde<>());
@@ -77,6 +90,14 @@ class BruteForceDeserializerTest {
 
     static Stream<Arguments> generateGenericAvroSerdes() {
         return generateSerdes(new GenericAvroSerde());
+    }
+
+    static Stream<Arguments> generateProtobufSerdes() {
+        return generateSerdes(new KafkaProtobufSerde<>());
+    }
+
+    static Stream<Arguments> generateJsonSerdes() {
+        return generateSerdes(new KafkaJsonSchemaSerde<>());
     }
 
     static Stream<Arguments> generateStringSerdes() {
@@ -217,6 +238,29 @@ class BruteForceDeserializerTest {
                 .isNull();
     }
 
+    @Test
+    void shouldIgnoreNoMatch() {
+        final byte[] value = {1, 0};
+        final Properties properties = new Properties();
+        properties.put(BruteForceSerdeConfig.SERDES_CONFIG, List.of());
+        this.testValueTopology(configured(Serdes.ByteArray()), properties, Serdes.ByteArray(), value);
+    }
+
+    @Test
+    void shouldFailIfIgnoreNoMatchIsDisabled() {
+        final byte[] value = {1, 0};
+        final Properties properties = new Properties();
+        properties.put(AbstractBruteForceConfig.IGNORE_NO_MATCH_CONFIG, false);
+        properties.put(BruteForceSerdeConfig.SERDES_CONFIG, List.of(GenericAvroSerde.class.getName()));
+        assertThatExceptionOfType(StreamsException.class)
+                .isThrownBy(() -> this.testValueTopology(configured(Serdes.ByteArray()), properties, Serdes.ByteArray(),
+                        value))
+                .havingCause()
+                .isInstanceOf(SerializationException.class)
+                .withMessage("No deserializer in [LargeMessageDeserializer, GenericAvroDeserializer] was able to "
+                        + "deserialize the data");
+    }
+
     @ParameterizedTest
     @MethodSource("generateStringSerdes")
     void shouldReadStringValues(final SerdeFactory<String> factory) {
@@ -281,6 +325,46 @@ class BruteForceDeserializerTest {
         this.testKeyTopology(factory, properties, Serdes.ByteArray(), value);
     }
 
+    @ParameterizedTest
+    @MethodSource("generateProtobufSerdes")
+    void shouldReadProtobufValues(final SerdeFactory<ProtobufRecord> factory) {
+        final ProtobufRecord value = ProtobufRecord.newBuilder().setName("Test").build();
+        final Properties properties = new Properties();
+        properties.put(BruteForceSerdeConfig.SERDES_CONFIG,
+                List.of(GenericAvroSerde.class.getName(), KafkaProtobufSerde.class.getName()));
+        this.testValueTopology(factory, properties, new KafkaProtobufSerde<>(ProtobufRecord.class), value);
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateProtobufSerdes")
+    void shouldReadProtobufKeys(final SerdeFactory<ProtobufRecord> factory) {
+        final ProtobufRecord value = ProtobufRecord.newBuilder().setName("Test").build();
+        final Properties properties = new Properties();
+        properties.put(BruteForceSerdeConfig.SERDES_CONFIG,
+                List.of(GenericAvroSerde.class.getName(), KafkaProtobufSerde.class.getName()));
+        this.testKeyTopology(factory, properties, new KafkaProtobufSerde<>(ProtobufRecord.class), value);
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateJsonSerdes")
+    void shouldReadJsonValues(final SerdeFactory<JsonTestRecord> factory) {
+        final JsonTestRecord value = new JsonTestRecord("test");
+        final Properties properties = new Properties();
+        properties.put(BruteForceSerdeConfig.SERDES_CONFIG,
+                List.of(GenericAvroSerde.class.getName(), KafkaJsonSchemaSerde.class.getName()));
+        this.testValueTopology(factory, properties, new KafkaJsonSchemaSerde<>(JsonTestRecord.class), value);
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateJsonSerdes")
+    void shouldReadJsonKeys(final SerdeFactory<JsonTestRecord> factory) {
+        final JsonTestRecord value = new JsonTestRecord("test");
+        final Properties properties = new Properties();
+        properties.put(BruteForceSerdeConfig.SERDES_CONFIG,
+                List.of(GenericAvroSerde.class.getName(), KafkaJsonSchemaSerde.class.getName()));
+        this.testKeyTopology(factory, properties, new KafkaJsonSchemaSerde<>(JsonTestRecord.class), value);
+    }
+
     private <T> void testValueTopology(final SerdeFactory<T> factory, final Properties properties, final Serde<T> serde,
             final T value) {
         final String bucket = "bucket";
@@ -337,7 +421,10 @@ class BruteForceDeserializerTest {
 
     private void createTopology(final Function<? super Properties, ? extends Topology> topologyFactory,
             final Properties properties) {
-        this.topology = new TestTopology<>(topologyFactory, createProperties(properties));
+        this.topology = new TestTopology<>(topologyFactory, createProperties(properties))
+                .withSchemaRegistryMock(new SchemaRegistryMock(List.of(
+                        new AvroSchemaProvider(), new ProtobufSchemaProvider(), new JsonSchemaProvider()
+                )));
         this.topology.start();
     }
 
@@ -345,5 +432,12 @@ class BruteForceDeserializerTest {
     private interface SerdeFactory<T> {
 
         Serde<T> create(Map<String, Object> config, boolean isKey);
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    private static class JsonTestRecord {
+        private String name;
     }
 }

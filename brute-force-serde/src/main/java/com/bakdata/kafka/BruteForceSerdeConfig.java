@@ -1,26 +1,59 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2022 bakdata GmbH
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package com.bakdata.kafka;
 
-
-import io.confluent.common.config.ConfigDef;
-import io.confluent.common.config.ConfigDef.Importance;
-import io.confluent.common.config.ConfigDef.Type;
-import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.config.ConfigDef.Importance;
+import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes.ByteArraySerde;
 import org.apache.kafka.common.serialization.Serdes.StringSerde;
 
+/**
+ * Configuration for kafka-brute-force-serde.
+ *
+ * <p>
+ * It let users configure:
+ * <ul>
+ *     <li>a list of {@link Serde} that should tried during the brute-force</li>
+ * </ul>
+ * </p>
+ *
+ * See {@link AbstractBruteForceConfig} for more configuration options.
+ */
 public class BruteForceSerdeConfig extends AbstractBruteForceConfig {
 
-    public static final String DESERIALIZERS_CONFIG = PREFIX + "deserializers";
-    public static final String DESERIALIZERS_DOC = "A comma separated list SerDes that should be tried.";
+    public static final String SERDES_CONFIG = PREFIX + "serdes";
+    public static final String SERDES_DOC = "A comma separated list of SerDes that should be tried.";
 
-    public static final List<String> DESERIALIZERS_DEFAULT = List.of(
-            SpecificAvroSerde.class.getName(),
-            GenericAvroSerde.class.getName(),
+    public static final List<String> SERDES_DEFAULT = List.of(
+            "io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde",
+            "io.confluent.kafka.streams.serdes.avro.GenericAvroSerde",
             StringSerde.class.getName(),
             ByteArraySerde.class.getName()
     );
@@ -29,7 +62,7 @@ public class BruteForceSerdeConfig extends AbstractBruteForceConfig {
 
     private static ConfigDef configDef() {
         return baseConfigDef()
-                .define(DESERIALIZERS_CONFIG, Type.LIST, DESERIALIZERS_DEFAULT, Importance.MEDIUM, DESERIALIZERS_DOC);
+                .define(SERDES_CONFIG, Type.LIST, SERDES_DEFAULT, Importance.MEDIUM, SERDES_DOC);
     }
 
     public BruteForceSerdeConfig(final Map<?, ?> originals) {
@@ -37,7 +70,7 @@ public class BruteForceSerdeConfig extends AbstractBruteForceConfig {
     }
 
     public List<Serde<?>> getSerdes() {
-        return this.getConfiguredInstances(DESERIALIZERS_CONFIG, Serde.class).stream()
+        return this.getInstances(SERDES_CONFIG, Serde.class).stream()
                 .map(serde -> (Serde<?>) serde)
                 .collect(Collectors.toList());
     }

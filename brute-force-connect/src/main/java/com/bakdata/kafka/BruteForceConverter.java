@@ -24,7 +24,6 @@
 
 package com.bakdata.kafka;
 
-import io.confluent.connect.avro.AvroConverter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,29 +35,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
-import org.apache.kafka.connect.converters.ByteArrayConverter;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.storage.Converter;
-import org.apache.kafka.connect.storage.StringConverter;
 
 /**
  * Kafka {@code Converter} that deserializes messages of an unknown serialization format. Serialization is not supported
  * by this converter.
  * <p>
- * Each serialization format that is tested for deserialization is first applied using {@link LargeMessageConverter} and
- * then using the standard serialization format. This converter tests the following format in this order:
- * <ul>
- *     <li>{@link AvroConverter} (if {@code schema.registry.url} is present in the converter configuration</li>
- *     <li>{@link StringConverter}</li>
- *     <li>{@link ByteArrayConverter}</li>
- * </ul>
+ *
+ * See {@link BruteForceConverterConfig} for the configuration of this converter.
  */
 @NoArgsConstructor
 @Slf4j
 public class BruteForceConverter implements Converter {
 
     private List<Converter> converters;
+    private boolean ignoreNoMatch;
 
     private static Converter createLargeMessageConverters(final Map<String, ?> configs, final boolean isKey,
             final Converter converter) {
@@ -78,10 +71,12 @@ public class BruteForceConverter implements Converter {
     @Override
     public void configure(final Map<String, ?> configs, final boolean isKey) {
         final BruteForceConverterConfig bruteForceConfig = new BruteForceConverterConfig(configs);
+        this.ignoreNoMatch = bruteForceConfig.ignoreNoMatch();
+
         Stream<Converter> converterStream = bruteForceConfig.getConverters().stream()
                 .peek(converter -> converter.configure(configs, isKey));
 
-        if (bruteForceConfig.isLargeMessageEnabled()) {
+        if (bruteForceConfig.largeMessageEnabled()) {
             converterStream = converterStream.flatMap(converter -> Stream.of(
                     createLargeMessageConverters(configs, isKey, converter),
                     converter
@@ -120,6 +115,17 @@ public class BruteForceConverter implements Converter {
                 log.trace("Failed converting message using {}", clazz, ex);
             }
         }
-        throw new IllegalStateException("Conversion should have worked with " + ByteArrayConverter.class);
+
+        if (this.ignoreNoMatch) {
+            log.info("No converter matched for topic {}. Falling back to a byte array", topic);
+            return new SchemaAndValue(Schema.OPTIONAL_BYTES_SCHEMA, value);
+        }
+
+        final String errorMessage =
+                String.format("No converter in [%s] was able to deserialize the data", this.converters.stream()
+                        .map(converter -> converter.getClass().getSimpleName())
+                        .collect(Collectors.joining(", ")));
+        throw new SerializationException(errorMessage);
     }
+
 }
