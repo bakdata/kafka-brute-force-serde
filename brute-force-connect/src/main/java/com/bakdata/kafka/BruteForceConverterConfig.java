@@ -30,9 +30,7 @@ import java.util.Map;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Type;
-import org.apache.kafka.connect.converters.ByteArrayConverter;
 import org.apache.kafka.connect.storage.Converter;
-import org.apache.kafka.connect.storage.StringConverter;
 
 /**
  * Configuration for kafka-brute-force-connect.
@@ -53,8 +51,8 @@ public class BruteForceConverterConfig extends AbstractBruteForceConfig {
 
     public static final List<String> CONVERTER_DEFAULTS = List.of(
             "io.confluent.connect.avro.AvroConverter",
-            StringConverter.class.getName(),
-            ByteArrayConverter.class.getName()
+            "org.apache.kafka.connect.storage.StringConverter",
+            "org.apache.kafka.connect.converters.ByteArrayConverter"
     );
 
     public static final ConfigDef CONFIG = configDef();

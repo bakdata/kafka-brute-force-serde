@@ -54,7 +54,7 @@ public class AbstractBruteForceConfig extends AbstractConfig {
 
     public static final String IGNORE_NO_MATCH_CONFIG = PREFIX + "ignore.no.match";
     public static final String IGNORE_NO_MATCH_DOC =
-            "If set, the deserialization will not fail and instead keep the data as a byte array."
+            "If set, the deserialization won't fail and instead keep the data as a byte array. "
                     + "This is equivalent to including ByteArray conversion in the corresponding conversion list.";
     public static final boolean IGNORE_NO_MATCH_DEFAULT = true;
 
