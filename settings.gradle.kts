@@ -6,5 +6,4 @@ pluginManagement {
 
 rootProject.name = "brute-force"
 
-include(":brute-force-serde", ":brute-force-connect")
-include("brute-force-core")
+include(":brute-force-core", ":brute-force-serde", ":brute-force-connect")
