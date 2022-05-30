@@ -34,18 +34,8 @@ import org.apache.kafka.common.serialization.Serializer;
  * Kafka {@code Serde} that deserializes messages of an unknown serialization format. Serialization is not supported by
  * this serde.
  * <p>
- * It uses {@link BruteForceSerializer} for serialization and {@link BruteForceDeserializer} for deserialization.
- * <p>
- * Each serialization format that is tested for deserialization is first applied using {@link LargeMessageSerde} and
- * then using the standard serialization format. This serde tests the following format in this order:
- * <ul>
- *     <li>{@link io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde} (if {@code schema.registry.url} is present
- *     in the serde configuration</li>
- *     <li>{@link io.confluent.kafka.streams.serdes.avro.GenericAvroSerde} (if {@code schema.registry.url} is present
- *     in the serde configuration</li>
- *     <li>{@link org.apache.kafka.common.serialization.Serdes.StringSerde}</li>
- *     <li>{@link org.apache.kafka.common.serialization.Serdes.ByteArraySerde}</li>
- * </ul>
+ * It uses {@link BruteForceSerializer} for serialization and {@link BruteForceDeserializer} for deserialization. See
+ * {@link BruteForceSerdeConfig} for the configuration of this serde.
  */
 public class BruteForceSerde implements Serde<Object> {
     @Delegate

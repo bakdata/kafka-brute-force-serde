@@ -1,14 +1,27 @@
 description = "Kafka Connect Converter that deserializes messages of an unknown serialization format"
 
+repositories {
+    // required for kafka-streams-json-schema-serde dependency
+    maven(url = "https://jitpack.io")
+}
+
 dependencies {
+    api(project(":brute-force-core"))
+
     val kafkaVersion: String by project
     api(group = "org.apache.kafka", name = "connect-api", version = kafkaVersion)
     compileOnly(group = "org.apache.kafka", name = "connect-runtime", version = kafkaVersion)
-    val confluentVersion: String by project
-    implementation(group = "io.confluent", name = "kafka-connect-avro-converter", version = confluentVersion)
 
     val largeMessageVersion: String by project
     implementation(group = "com.bakdata.kafka", name = "large-message-connect", version = largeMessageVersion)
+
+    val confluentVersion: String by project
+    testImplementation(group = "io.confluent", name = "kafka-connect-avro-converter", version = confluentVersion)
+    testImplementation(group = "io.confluent", name = "kafka-connect-protobuf-converter", version = confluentVersion)
+    testImplementation(group = "io.confluent", name = "kafka-connect-json-schema-converter", version = confluentVersion)
+
+    testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde", version = confluentVersion)
+    testImplementation(group = "io.confluent", name = "kafka-streams-json-schema-serde", version = confluentVersion)
 
     testImplementation(group = "com.adobe.testing", name = "s3mock-junit5", version = "2.1.8") {
         exclude(group = "ch.qos.logback")
