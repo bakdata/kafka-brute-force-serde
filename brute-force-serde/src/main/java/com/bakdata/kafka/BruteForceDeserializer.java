@@ -54,7 +54,7 @@ public class BruteForceDeserializer implements Deserializer<Object> {
 
     private static List<Deserializer<?>> createDeserializers(final Map<String, ?> configs, final boolean isKey,
             final BruteForceSerdeConfig serdeConfig) {
-        final List<Serde<?>> serdes = serdeConfig.getSerdes();
+        final List<Serde<Object>> serdes = serdeConfig.getSerdes();
         serdes.forEach(serde -> serde.configure(configs, isKey));
 
         if (serdeConfig.isLargeMessageEnabled()) {

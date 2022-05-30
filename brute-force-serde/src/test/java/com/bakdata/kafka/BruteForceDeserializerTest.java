@@ -253,9 +253,10 @@ class BruteForceDeserializerTest {
         final Properties properties = new Properties();
         properties.put(AbstractBruteForceConfig.IGNORE_NO_MATCH_CONFIG, false);
         properties.put(BruteForceSerdeConfig.SERDES_CONFIG, List.of(GenericAvroSerde.class.getName()));
+        final SerdeFactory<byte[]> serdeFactory = configured(Serdes.ByteArray());
+        final Serde<byte[]> serde = Serdes.ByteArray();
         assertThatExceptionOfType(StreamsException.class)
-                .isThrownBy(() -> this.testValueTopology(configured(Serdes.ByteArray()), properties, Serdes.ByteArray(),
-                        value))
+                .isThrownBy(() -> this.testValueTopology(serdeFactory, properties, serde, value))
                 .havingCause()
                 .isInstanceOf(SerializationException.class)
                 .withMessage(String.format("No deserializer in [%s, %s] was able to deserialize the data",

@@ -77,10 +77,12 @@ public class BruteForceSerdeConfig extends AbstractBruteForceConfig {
     /**
      * Instantiates and returns the list of configured serde classes.
      */
-    public List<Serde<?>> getSerdes() {
+    @SuppressWarnings("unchecked")
+    public List<Serde<Object>> getSerdes() {
         return this.getInstances(SERDES_CONFIG, Serde.class).stream()
-                .map(serde -> (Serde<?>) serde)
+                .map(serde -> (Serde<Object>) serde)
                 .collect(Collectors.toList());
+
     }
 
 }
