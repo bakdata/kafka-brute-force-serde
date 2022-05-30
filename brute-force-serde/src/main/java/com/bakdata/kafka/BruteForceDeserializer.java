@@ -50,7 +50,23 @@ import org.apache.kafka.common.serialization.Serde;
 public class BruteForceDeserializer implements Deserializer<Object> {
 
     private List<Deserializer<?>> deserializers;
-    private boolean ignoreNoMatch;
+    private boolean shouldIgnoreNoMatch;
+
+    private static List<Deserializer<?>> createDeserializers(final Map<String, ?> configs, final boolean isKey,
+            final BruteForceSerdeConfig serdeConfig) {
+        final List<Serde<?>> serdes = serdeConfig.getSerdes();
+        serdes.forEach(serde -> serde.configure(configs, isKey));
+
+        if (serdeConfig.isLargeMessageEnabled()) {
+            // create interleaved stream, i.e., LargeMessage of Serde A, Serde A, LargeMessage of Serde B, Serde B...
+            return serdes.stream().flatMap(serde -> Stream.of(
+                    createLargeMessageDeserializer(configs, isKey, serde),
+                    serde.deserializer()
+            )).collect(Collectors.toList());
+        } else {
+            return serdes.stream().map(Serde::deserializer).collect(Collectors.toList());
+        }
+    }
 
     private static LargeMessageDeserializer<?> createLargeMessageDeserializer(final Map<String, ?> configs,
             final boolean isKey, final Serde<?> serde) {
@@ -72,23 +88,9 @@ public class BruteForceDeserializer implements Deserializer<Object> {
     @Override
     public void configure(final Map<String, ?> configs, final boolean isKey) {
         final BruteForceSerdeConfig serdeConfig = new BruteForceSerdeConfig(configs);
-        this.ignoreNoMatch = serdeConfig.ignoreNoMatch();
-        final Stream<Serde<?>> serdeStream = serdeConfig.getSerdes().stream()
-                .peek(serde -> serde.configure(configs, isKey));
-
-        final Stream<Deserializer<?>> deserializerStream;
-        if (serdeConfig.largeMessageEnabled()) {
-            // create interleaved stream, i.e., LargeMessage of Serde A, Serde A, LargeMessage of Serde B, Serde B...
-            deserializerStream = serdeStream.flatMap(serde -> Stream.of(
-                    createLargeMessageDeserializer(configs, isKey, serde),
-                    serde.deserializer()
-            ));
-        } else {
-            deserializerStream = serdeStream.map(Serde::deserializer);
-        }
-        this.deserializers = deserializerStream.collect(Collectors.toList());
+        this.shouldIgnoreNoMatch = serdeConfig.shouldIgnoreNoMatch();
+        this.deserializers = createDeserializers(configs, isKey, serdeConfig);
     }
-
 
     /**
      * @since 1.1.0
@@ -114,14 +116,14 @@ public class BruteForceDeserializer implements Deserializer<Object> {
             }
         }
 
-        if (this.ignoreNoMatch) {
+        if (this.shouldIgnoreNoMatch) {
             log.info("No deserializer matched for data in topic {}. Falling back to a byte array.", topic);
             return data;
         }
 
         final String errorMessage = String.format("No deserializer in [%s] was able to deserialize the data",
                 this.deserializers.stream()
-                        .map(deserializer -> deserializer.getClass().getSimpleName())
+                        .map(deserializer -> deserializer.getClass().getName())
                         .collect(Collectors.joining(", ")));
         throw new SerializationException(errorMessage);
     }

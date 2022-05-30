@@ -30,11 +30,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.apache.kafka.connect.converters.ByteArrayConverter;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.storage.Converter;
@@ -46,14 +46,33 @@ import org.apache.kafka.connect.storage.Converter;
  *
  * See {@link BruteForceConverterConfig} for the configuration of this converter.
  */
-@NoArgsConstructor
 @Slf4j
 public class BruteForceConverter implements Converter {
 
     private List<Converter> converters;
-    private boolean ignoreNoMatch;
+    private boolean shouldIgnoreNoMatch;
+    private final Converter fallbackConverter;
 
-    private static Converter createLargeMessageConverters(final Map<String, ?> configs, final boolean isKey,
+    public BruteForceConverter() {
+        this.fallbackConverter = new ByteArrayConverter();
+    }
+
+
+    private static List<Converter> createConverters(final Map<String, ?> configs, final boolean isKey,
+            final BruteForceConverterConfig bruteForceConfig) {
+        final List<Converter> configuredConverter = bruteForceConfig.getConverters();
+        configuredConverter.forEach(converter -> converter.configure(configs, isKey));
+
+        if (!bruteForceConfig.isLargeMessageEnabled()) {
+            return configuredConverter;
+        }
+
+        return configuredConverter.stream()
+                .flatMap(converter -> Stream.of(createLargeMessageConverter(configs, isKey, converter), converter))
+                .collect(Collectors.toList());
+    }
+
+    private static Converter createLargeMessageConverter(final Map<String, ?> configs, final boolean isKey,
             final Converter converter) {
         final Converter largeMessageConverter = new LargeMessageConverter();
         final Map<String, Object> largeMessageConfigs = createLargeMessageConfig(configs, converter);
@@ -71,20 +90,10 @@ public class BruteForceConverter implements Converter {
     @Override
     public void configure(final Map<String, ?> configs, final boolean isKey) {
         final BruteForceConverterConfig bruteForceConfig = new BruteForceConverterConfig(configs);
-        this.ignoreNoMatch = bruteForceConfig.ignoreNoMatch();
-
-        Stream<Converter> converterStream = bruteForceConfig.getConverters().stream()
-                .peek(converter -> converter.configure(configs, isKey));
-
-        if (bruteForceConfig.largeMessageEnabled()) {
-            converterStream = converterStream.flatMap(converter -> Stream.of(
-                    createLargeMessageConverters(configs, isKey, converter),
-                    converter
-            ));
-        }
-
-        this.converters = converterStream.collect(Collectors.toList());
+        this.shouldIgnoreNoMatch = bruteForceConfig.shouldIgnoreNoMatch();
+        this.converters = createConverters(configs, isKey, bruteForceConfig);
     }
+
 
     @Override
     public byte[] fromConnectData(final String topic, final Schema schema, final Object value) {
@@ -116,14 +125,14 @@ public class BruteForceConverter implements Converter {
             }
         }
 
-        if (this.ignoreNoMatch) {
+        if (this.shouldIgnoreNoMatch) {
             log.info("No converter matched for topic {}. Falling back to a byte array", topic);
-            return new SchemaAndValue(Schema.OPTIONAL_BYTES_SCHEMA, value);
+            return this.fallbackConverter.toConnectData(topic, headers, value);
         }
 
         final String errorMessage =
                 String.format("No converter in [%s] was able to deserialize the data", this.converters.stream()
-                        .map(converter -> converter.getClass().getSimpleName())
+                        .map(converter -> converter.getClass().getName())
                         .collect(Collectors.joining(", ")));
         throw new SerializationException(errorMessage);
     }

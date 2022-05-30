@@ -69,11 +69,17 @@ public class AbstractBruteForceConfig extends AbstractConfig {
                         IGNORE_NO_MATCH_DOC);
     }
 
-    public boolean largeMessageEnabled() {
+    /**
+     * Flag indicating if support for large-message-serde is enabled
+     */
+    public boolean isLargeMessageEnabled() {
         return this.getBoolean(LARGE_MESSAGE_ENABLED_CONFIG);
     }
 
-    public boolean ignoreNoMatch() {
+    /**
+     * Flag indicating if values for which no deserializing strategy worked should be ignored
+     */
+    public boolean shouldIgnoreNoMatch() {
         return this.getBoolean(IGNORE_NO_MATCH_CONFIG);
     }
 
@@ -89,14 +95,17 @@ public class AbstractBruteForceConfig extends AbstractConfig {
      * @return a list with instances of the base class
      */
     protected <T> List<T> getInstances(final String config, final Class<T> baseClazz) {
-        return this.getList(config).stream().map(configuredClazz -> {
-                    try {
-                        return (Class<? extends T>) Utils.loadClass(configuredClazz, baseClazz);
-                    } catch (final ClassNotFoundException e) {
-                        throw new KafkaException("Could not load class " + configuredClazz);
-                    }
-                }).map(Utils::newInstance)
+        return this.getList(config).stream()
+                .map(configuredClazz -> newInstance(configuredClazz, baseClazz))
                 .collect(Collectors.toList());
+    }
+
+    private static <T> T newInstance(final String configuredClazz, final Class<T> baseClazz) {
+        try {
+            return Utils.newInstance(configuredClazz, baseClazz);
+        } catch (final ClassNotFoundException e) {
+            throw new KafkaException("Class " + configuredClazz + " cannot be found", e);
+        }
     }
 
 }

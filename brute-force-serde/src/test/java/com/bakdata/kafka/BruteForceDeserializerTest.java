@@ -36,6 +36,7 @@ import com.bakdata.schemaregistrymock.SchemaRegistryMock;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
+import io.confluent.kafka.streams.serdes.avro.GenericAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import io.confluent.kafka.streams.serdes.json.KafkaJsonSchemaSerde;
@@ -257,8 +258,8 @@ class BruteForceDeserializerTest {
                         value))
                 .havingCause()
                 .isInstanceOf(SerializationException.class)
-                .withMessage("No deserializer in [LargeMessageDeserializer, GenericAvroDeserializer] was able to "
-                        + "deserialize the data");
+                .withMessage(String.format("No deserializer in [%s, %s] was able to deserialize the data",
+                        LargeMessageDeserializer.class.getName(), GenericAvroDeserializer.class.getName()));
     }
 
     @ParameterizedTest

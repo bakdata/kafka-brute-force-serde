@@ -59,15 +59,24 @@ public class BruteForceSerdeConfig extends AbstractBruteForceConfig {
 
     public static final ConfigDef CONFIG = configDef();
 
+    /**
+     * Create config from the given properties.
+     *
+     * @param originals the properties
+     */
+    public BruteForceSerdeConfig(final Map<?, ?> originals) {
+        super(CONFIG, originals);
+    }
+
+
     private static ConfigDef configDef() {
         return baseConfigDef()
                 .define(SERDES_CONFIG, Type.LIST, SERDES_DEFAULT, Importance.MEDIUM, SERDES_DOC);
     }
 
-    public BruteForceSerdeConfig(final Map<?, ?> originals) {
-        super(CONFIG, originals);
-    }
-
+    /**
+     * Instantiates and returns the list of configured serde classes.
+     */
     public List<Serde<?>> getSerdes() {
         return this.getInstances(SERDES_CONFIG, Serde.class).stream()
                 .map(serde -> (Serde<?>) serde)

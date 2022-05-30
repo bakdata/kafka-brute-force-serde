@@ -206,12 +206,14 @@ class BruteForceConverterTest {
         final Map<String, Object> config =
                 Map.of(BruteForceConverterConfig.CONVERTER_CONFIG, List.of(AvroConverter.class.getName()),
                         AbstractBruteForceConfig.IGNORE_NO_MATCH_CONFIG, false);
+        final SerializerFactory<byte[]> factory = configured(new ByteArraySerializer());
+        final ByteArraySerializer expectedSerializer = new ByteArraySerializer();
+        final ByteArrayConverter expectedConverter = new ByteArrayConverter();
         assertThatExceptionOfType(SerializationException.class)
                 .isThrownBy(
-                        () -> this.testValueConversion(configured(new ByteArraySerializer()), new ByteArraySerializer(),
-                                value, config, new ByteArrayConverter()))
-                .withMessage("No converter in [LargeMessageConverter, AvroConverter] was able to "
-                        + "deserialize the data");
+                        () -> this.testValueConversion(factory, expectedSerializer, value, config, expectedConverter))
+                .withMessage(String.format("No converter in [%s, %s] was able to deserialize the data",
+                        LargeMessageConverter.class.getName(), AvroConverter.class.getName()));
     }
 
     @ParameterizedTest
