@@ -76,7 +76,7 @@ For other build tools or versions, refer to the [latest version in MvnRepository
 
 To use it with your Kafka Connect connectors, just configure your converter as `com.bakdata.kafka.BruteForceConverter`.
 
-Byte default, the converter attempts to deserialize messages using the following converters in this order:
+By default, the converter attempts to deserialize messages using the following converters in this order:
 - AvroConverter
 - StringConverter
 - ByteArrayConverter

@@ -266,14 +266,15 @@ class BruteForceDeserializerTest {
     void shouldFailForLargeMessageSerdeIfDisabled() {
         final GenericRecord value = newGenericRecord();
         final SerdeFactory<GenericRecord> factory = createLargeMessageSerde(new GenericAvroSerde(), 0, true);
-        final Properties properties = new Properties();
+        final GenericAvroSerde serde = new GenericAvroSerde();
 
+        final Properties properties = new Properties();
         properties.put(AbstractBruteForceConfig.LARGE_MESSAGE_ENABLED_CONFIG, false);
         properties.put(AbstractBruteForceConfig.IGNORE_NO_MATCH_CONFIG, false);
         properties.put(BruteForceSerdeConfig.SERDES_CONFIG, List.of(GenericAvroSerde.class.getName()));
 
         assertThatExceptionOfType(StreamsException.class)
-                .isThrownBy(() -> this.testValueTopology(factory, properties, new GenericAvroSerde(), value))
+                .isThrownBy(() -> this.testValueTopology(factory, properties, serde, value))
                 .havingCause()
                 .isInstanceOf(SerializationException.class)
                 .withMessage(String.format("No deserializer in [%s] was able to deserialize the data",
