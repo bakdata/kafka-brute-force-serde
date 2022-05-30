@@ -82,7 +82,6 @@ public class BruteForceSerdeConfig extends AbstractBruteForceConfig {
         return this.getInstances(SERDES_CONFIG, Serde.class).stream()
                 .map(serde -> (Serde<Object>) serde)
                 .collect(Collectors.toList());
-
     }
 
 }
