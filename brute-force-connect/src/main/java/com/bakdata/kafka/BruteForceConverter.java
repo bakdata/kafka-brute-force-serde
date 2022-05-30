@@ -53,10 +53,12 @@ public class BruteForceConverter implements Converter {
     private boolean shouldIgnoreNoMatch;
     private final Converter fallbackConverter;
 
+    /**
+     * Creates an unconfigured Converter.
+     */
     public BruteForceConverter() {
         this.fallbackConverter = new ByteArrayConverter();
     }
-
 
     private static List<Converter> createConverters(final Map<String, ?> configs, final boolean isKey,
             final BruteForceConverterConfig bruteForceConfig) {

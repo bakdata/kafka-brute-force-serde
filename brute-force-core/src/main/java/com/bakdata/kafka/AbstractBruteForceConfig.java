@@ -39,10 +39,10 @@ import org.apache.kafka.common.utils.Utils;
  *
  * <p>
  * This allows users to:
- *  <ul>
- *      <li>toggle support for large message</li>
- *      <li>toggle if no matches should lead to an exception</li>
- *  </ul>
+ * <ul>
+ *     <li>toggle support for large message</li>
+ *     <li>toggle if no matches should lead to an exception</li>
+ * </ul>
  */
 public class AbstractBruteForceConfig extends AbstractConfig {
     public static final String PREFIX = "brute.force.";
@@ -71,6 +71,8 @@ public class AbstractBruteForceConfig extends AbstractConfig {
 
     /**
      * Flag indicating if support for large-message-serde is enabled
+     *
+     * @return True if large message support is enabled
      */
     public boolean isLargeMessageEnabled() {
         return this.getBoolean(LARGE_MESSAGE_ENABLED_CONFIG);
@@ -78,6 +80,8 @@ public class AbstractBruteForceConfig extends AbstractConfig {
 
     /**
      * Flag indicating if values for which no deserializing strategy worked should be ignored
+     *
+     * @return True if no matches should be ignored
      */
     public boolean shouldIgnoreNoMatch() {
         return this.getBoolean(IGNORE_NO_MATCH_CONFIG);

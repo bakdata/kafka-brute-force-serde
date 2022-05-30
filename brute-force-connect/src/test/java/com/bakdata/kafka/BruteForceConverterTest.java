@@ -203,17 +203,43 @@ class BruteForceConverterTest {
     @Test
     void shouldFailIfIgnoreNoMatchIsDisabled() {
         final byte[] value = {1, 0};
-        final Map<String, Object> config =
-                Map.of(BruteForceConverterConfig.CONVERTER_CONFIG, List.of(AvroConverter.class.getName()),
-                        AbstractBruteForceConfig.IGNORE_NO_MATCH_CONFIG, false);
+
         final SerializerFactory<byte[]> factory = configured(new ByteArraySerializer());
         final ByteArraySerializer expectedSerializer = new ByteArraySerializer();
         final ByteArrayConverter expectedConverter = new ByteArrayConverter();
+
+        final Map<String, Object> config = Map.of(
+                BruteForceConverterConfig.CONVERTER_CONFIG, List.of(AvroConverter.class.getName()),
+                AbstractBruteForceConfig.IGNORE_NO_MATCH_CONFIG, false
+        );
+
         assertThatExceptionOfType(SerializationException.class)
                 .isThrownBy(
                         () -> this.testValueConversion(factory, expectedSerializer, value, config, expectedConverter))
                 .withMessage(String.format("No converter in [%s, %s] was able to deserialize the data",
                         LargeMessageConverter.class.getName(), AvroConverter.class.getName()));
+    }
+
+    @Test
+    void shouldFailForLargeMessageSerdeIfDisabled() {
+        final GenericRecord value = newGenericRecord();
+
+        final SerializerFactory<GenericRecord> factory = createLargeMessageSerializer(new GenericAvroSerde(), 0, true);
+        final GenericAvroSerializer expectedSerializer = new GenericAvroSerializer();
+        final AvroConverter expectedConverter = new AvroConverter();
+
+        final Map<String, Object> config = Map.of(
+                AbstractBruteForceConfig.LARGE_MESSAGE_ENABLED_CONFIG, false,
+                AbstractBruteForceConfig.IGNORE_NO_MATCH_CONFIG, false,
+                BruteForceConverterConfig.CONVERTER_CONFIG, List.of(AvroConverter.class.getName())
+        );
+
+        assertThatExceptionOfType(SerializationException.class)
+                .isThrownBy(
+                        () -> this.testValueConversion(factory, expectedSerializer, value, config, expectedConverter))
+                .withMessage(String.format("No converter in [%s] was able to deserialize the data",
+                        AvroConverter.class.getName()));
+
     }
 
     @ParameterizedTest
