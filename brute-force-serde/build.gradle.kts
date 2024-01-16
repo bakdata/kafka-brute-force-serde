@@ -26,10 +26,9 @@ dependencies {
     testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde", version = confluentVersion)
     testImplementation(group = "io.confluent", name = "kafka-streams-json-schema-serde", version = confluentVersion)
 
-    testImplementation(group = "com.adobe.testing", name = "s3mock-junit5", version = "2.4.16") {
-        exclude(group = "ch.qos.logback")
-        exclude(group = "org.apache.logging.log4j", module = "log4j-to-slf4j")
-    }
+    val testContainersVersion: String by project
+    testImplementation(group = "org.testcontainers", name = "junit-jupiter", version = testContainersVersion)
+    testImplementation(group = "org.testcontainers", name = "localstack", version = testContainersVersion)
     testImplementation(group = "org.jooq", name = "jool", version = "0.9.14")
 
     val fluentKafkaVersion = "2.11.3"

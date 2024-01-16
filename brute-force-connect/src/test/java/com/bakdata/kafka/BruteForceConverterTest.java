@@ -30,7 +30,6 @@ import static org.apache.kafka.connect.storage.StringConverterConfig.ENCODING_CO
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import com.adobe.testing.s3mock.junit5.S3MockExtension;
 import com.bakdata.schemaregistrymock.SchemaRegistryMock;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
@@ -49,6 +48,7 @@ import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerializer;
 import io.confluent.kafka.streams.serdes.json.KafkaJsonSchemaSerde;
 import io.confluent.kafka.streams.serdes.protobuf.KafkaProtobufSerde;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,20 +76,56 @@ import org.apache.kafka.connect.storage.StringConverter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.testcontainers.containers.localstack.LocalStackContainer;
+import org.testcontainers.containers.localstack.LocalStackContainer.Service;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 
+@Testcontainers
 class BruteForceConverterTest {
-    @RegisterExtension
-    static final S3MockExtension S3_MOCK = S3MockExtension.builder().silent().withSecureConnection(false).build();
-    private static final String TOPIC = "topic";
-    final SchemaRegistryMock schemaRegistry = new SchemaRegistryMock(List.of(
+
+    private static final DockerImageName LOCAL_STACK_IMAGE = DockerImageName.parse("localstack/localstack")
+            .withTag("1.3.1");
+    @Container
+    private static final LocalStackContainer LOCAL_STACK_CONTAINER = new LocalStackContainer(LOCAL_STACK_IMAGE)
+            .withServices(Service.S3);
+    private final SchemaRegistryMock schemaRegistry = new SchemaRegistryMock(List.of(
             new AvroSchemaProvider(),
             new JsonSchemaProvider(),
             new ProtobufSchemaProvider()
     ));
+
+    static S3Client getS3Client() {
+        return S3Client.builder()
+                .endpointOverride(getEndpointOverride())
+                .credentialsProvider(StaticCredentialsProvider.create(getCredentials()))
+                .region(getRegion())
+                .build();
+    }
+
+    private static Region getRegion() {
+        return Region.of(LOCAL_STACK_CONTAINER.getRegion());
+    }
+
+    private static AwsBasicCredentials getCredentials() {
+        return AwsBasicCredentials.create(
+                LOCAL_STACK_CONTAINER.getAccessKey(), LOCAL_STACK_CONTAINER.getSecretKey()
+        );
+    }
+    private static final String TOPIC = "topic";
+
+    private static URI getEndpointOverride() {
+        return LOCAL_STACK_CONTAINER.getEndpointOverride(Service.S3);
+    }
 
     static Stream<Arguments> generateGenericAvroSerializers() {
         return generateSerializers(new GenericAvroSerde());
@@ -154,11 +190,12 @@ class BruteForceConverterTest {
     }
 
     private static Map<String, Object> getS3EndpointConfig() {
+        final AwsBasicCredentials credentials = getCredentials();
         return Map.of(
-                AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG, "http://localhost:" + S3_MOCK.getHttpPort(),
-                AbstractLargeMessageConfig.S3_REGION_CONFIG, "us-east-1",
-                AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, "foo",
-                AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, "bar"
+                AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG, getEndpointOverride().toString(),
+                AbstractLargeMessageConfig.S3_REGION_CONFIG, getRegion().id(),
+                AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, credentials.accessKeyId(),
+                AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, credentials.secretAccessKey()
         );
     }
 
@@ -358,7 +395,9 @@ class BruteForceConverterTest {
             final T value, final Map<String, Object> originals, final Converter expectedConverter,
             final boolean isKey) {
         final String bucket = "bucket";
-        S3_MOCK.createS3Client().createBucket(bucket);
+        getS3Client().createBucket(CreateBucketRequest.builder()
+                .bucket(bucket)
+                .build());
         final Map<String, Object> config = new HashMap<>(originals);
         config.put(SCHEMA_REGISTRY_URL_CONFIG, this.schemaRegistry.getUrl());
         config.put(AbstractLargeMessageConfig.BASE_PATH_CONFIG, "s3://" + bucket + "/");
