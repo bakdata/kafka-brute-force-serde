@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022 bakdata
+ * Copyright (c) 2024 bakdata
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -69,12 +69,12 @@ class BruteForceConverterIntegrationTest {
 
     private static Properties createS3BackedProperties() {
         final Properties properties = new Properties();
-        properties.put(AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG, "http://localhost:" + S3_MOCK.getHttpPort());
-        properties.put(AbstractLargeMessageConfig.S3_REGION_CONFIG, "us-east-1");
-        properties.put(AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, "foo");
-        properties.put(AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, "bar");
-        properties.put(AbstractLargeMessageConfig.S3_ENABLE_PATH_STYLE_ACCESS_CONFIG, true);
-        properties.put(AbstractLargeMessageConfig.BASE_PATH_CONFIG, String.format("s3://%s/", BUCKET_NAME));
+        properties.setProperty(AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG,
+                "http://localhost:" + S3_MOCK.getHttpPort());
+        properties.setProperty(AbstractLargeMessageConfig.S3_REGION_CONFIG, "us-east-1");
+        properties.setProperty(AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, "foo");
+        properties.setProperty(AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, "bar");
+        properties.setProperty(AbstractLargeMessageConfig.BASE_PATH_CONFIG, String.format("s3://%s/", BUCKET_NAME));
         return properties;
     }
 
@@ -130,13 +130,13 @@ class BruteForceConverterIntegrationTest {
 
     private Properties config() {
         final Properties properties = new Properties();
-        properties.put(ConnectorConfig.NAME_CONFIG, "test");
-        properties.put(ConnectorConfig.CONNECTOR_CLASS_CONFIG, "FileStreamSink");
-        properties.put(SinkConnector.TOPICS_CONFIG, TOPIC);
-        properties.put(FileStreamSinkConnector.FILE_CONFIG, this.outputFile.toString());
-        properties.put(ConnectorConfig.KEY_CONVERTER_CLASS_CONFIG, StringConverter.class.getName());
-        properties.put(ConnectorConfig.VALUE_CONVERTER_CLASS_CONFIG, BruteForceConverter.class.getName());
-        properties.put(withValuePrefix(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG),
+        properties.setProperty(ConnectorConfig.NAME_CONFIG, "test");
+        properties.setProperty(ConnectorConfig.CONNECTOR_CLASS_CONFIG, "FileStreamSink");
+        properties.setProperty(SinkConnector.TOPICS_CONFIG, TOPIC);
+        properties.setProperty(FileStreamSinkConnector.FILE_CONFIG, this.outputFile.toString());
+        properties.setProperty(ConnectorConfig.KEY_CONVERTER_CLASS_CONFIG, StringConverter.class.getName());
+        properties.setProperty(ConnectorConfig.VALUE_CONVERTER_CLASS_CONFIG, BruteForceConverter.class.getName());
+        properties.setProperty(withValuePrefix(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG),
                 this.schemaRegistry.getUrl());
         createS3BackedProperties().forEach((key, value) -> properties.put(withValuePrefix(key), value));
         return properties;
@@ -154,7 +154,7 @@ class BruteForceConverterIntegrationTest {
     private Properties createBaseProducerProperties() {
         final Properties properties = new Properties();
         properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.kafkaCluster.getBrokerList());
+        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.kafkaCluster.getBrokerList());
         return properties;
     }
 
@@ -167,7 +167,7 @@ class BruteForceConverterIntegrationTest {
     private Properties createAvroProducerProperties() {
         final Properties properties = this.createBaseProducerProperties();
         properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GenericAvroSerializer.class);
-        properties.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, this.schemaRegistry.getUrl());
+        properties.setProperty(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, this.schemaRegistry.getUrl());
         return properties;
     }
 }
