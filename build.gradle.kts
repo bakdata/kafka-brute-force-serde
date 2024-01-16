@@ -1,12 +1,9 @@
-import net.researchgate.release.GitAdapter.GitConfig
-import net.researchgate.release.ReleaseExtension
-
 plugins {
-    id("net.researchgate.release") version "2.8.1"
-    id("com.bakdata.sonar") version "1.1.7"
-    id("com.bakdata.sonatype") version "1.1.7"
-    id("org.hildan.github.changelog") version "0.8.0"
-    id("io.freefair.lombok") version "5.3.3.3"
+    id("net.researchgate.release") version "3.0.2"
+    id("com.bakdata.sonar") version "1.1.9"
+    id("com.bakdata.sonatype") version "1.1.9"
+    id("org.hildan.github.changelog") version "1.12.1"
+    id("io.freefair.lombok") version "6.6.3"
 }
 
 allprojects {
@@ -60,17 +57,9 @@ subprojects {
         "testImplementation"(group = "org.junit.jupiter", name = "junit-jupiter-api", version = junitVersion)
         "testImplementation"(group = "org.junit.jupiter", name = "junit-jupiter-params", version = junitVersion)
         "testRuntimeOnly"(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = junitVersion)
-        "testImplementation"(group = "org.assertj", name = "assertj-core", version = "3.20.2")
+        "testImplementation"(group = "org.assertj", name = "assertj-core", version = "3.25.1")
 
         val log4jVersion: String by project
         "testImplementation"(group = "org.apache.logging.log4j", name = "log4j-slf4j-impl", version = log4jVersion)
-    }
-}
-
-fun ReleaseExtension.git(configure: GitConfig.() -> Unit) = (getProperty("git") as GitConfig).configure()
-
-release {
-    git {
-        requireBranch = "main"
     }
 }

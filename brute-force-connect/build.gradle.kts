@@ -27,7 +27,7 @@ dependencies {
         exclude(group = "ch.qos.logback")
         exclude(group = "org.apache.logging.log4j", module = "log4j-to-slf4j")
     }
-    val fluentKafkaVersion = "2.5.1"
+    val fluentKafkaVersion = "2.11.3"
     testImplementation(
         group = "com.bakdata.fluent-kafka-streams-tests",
         name = "schema-registry-mock-junit5",

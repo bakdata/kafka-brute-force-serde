@@ -4,7 +4,7 @@ import com.google.protobuf.gradle.protoc
 description = "Kafka SerDe that deserializes messages of an unknown serialization format"
 
 plugins {
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.2.1"
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
     id("com.google.protobuf") version "0.8.18"
 }
 
@@ -32,7 +32,7 @@ dependencies {
     }
     testImplementation(group = "org.jooq", name = "jool", version = "0.9.14")
 
-    val fluentKafkaVersion = "2.5.1"
+    val fluentKafkaVersion = "2.11.3"
     testImplementation(
         group = "com.bakdata.fluent-kafka-streams-tests",
         name = "fluent-kafka-streams-tests-junit5",
