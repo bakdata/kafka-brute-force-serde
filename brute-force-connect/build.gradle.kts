@@ -23,7 +23,7 @@ dependencies {
     testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde", version = confluentVersion)
     testImplementation(group = "io.confluent", name = "kafka-streams-json-schema-serde", version = confluentVersion)
 
-    testImplementation(group = "com.adobe.testing", name = "s3mock-junit5", version = "2.1.8") {
+    testImplementation(group = "com.adobe.testing", name = "s3mock-junit5", version = "2.4.16") {
         exclude(group = "ch.qos.logback")
         exclude(group = "org.apache.logging.log4j", module = "log4j-to-slf4j")
     }
