@@ -35,7 +35,7 @@ dependencies {
     )
 
     testImplementation(group = "com.bakdata.kafka", name = "large-message-serde", version = largeMessageVersion)
-    testImplementation(group = "net.mguenther.kafka", name = "kafka-junit", version = kafkaVersion) {
+    testImplementation(group = "net.mguenther.kafka", name = "kafka-junit", version = "3.5.0") {
         exclude(group = "org.slf4j", module = "slf4j-log4j12")
     }
     testImplementation(group = "org.apache.kafka", name = "connect-file", version = kafkaVersion)
