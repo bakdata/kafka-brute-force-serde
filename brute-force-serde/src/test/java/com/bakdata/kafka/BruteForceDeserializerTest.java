@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022 bakdata
+ * Copyright (c) 2024 bakdata
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -181,8 +181,7 @@ class BruteForceDeserializerTest {
                 AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG, "http://localhost:" + S3_MOCK.getHttpPort(),
                 AbstractLargeMessageConfig.S3_REGION_CONFIG, "us-east-1",
                 AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, "foo",
-                AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, "bar",
-                AbstractLargeMessageConfig.S3_ENABLE_PATH_STYLE_ACCESS_CONFIG, true
+                AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, "bar"
         );
     }
 
@@ -329,7 +328,7 @@ class BruteForceDeserializerTest {
     void shouldReadBytesValues(final SerdeFactory<byte[]> factory) {
         final Properties properties = new Properties();
         // this makes StringDeserializer fail
-        properties.put("value.deserializer.encoding", "missing");
+        properties.setProperty("value.deserializer.encoding", "missing");
 
         final byte[] value = {1, 0};
         this.testValueTopology(factory, properties, Serdes.ByteArray(), value);
@@ -340,7 +339,7 @@ class BruteForceDeserializerTest {
     void shouldReadBytesKeys(final SerdeFactory<byte[]> factory) {
         final Properties properties = new Properties();
         // this makes StringDeserializer fail
-        properties.put("key.deserializer.encoding", "missing");
+        properties.setProperty("key.deserializer.encoding", "missing");
 
         final byte[] value = {1, 0};
         this.testKeyTopology(factory, properties, Serdes.ByteArray(), value);

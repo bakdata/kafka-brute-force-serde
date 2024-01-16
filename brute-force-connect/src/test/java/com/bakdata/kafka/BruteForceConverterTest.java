@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022 bakdata
+ * Copyright (c) 2024 bakdata
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -125,7 +125,7 @@ class BruteForceConverterTest {
         final DynamicSchema dynamicSchema = DynamicSchema.newBuilder()
                 .setName("file")
                 .addMessageDefinition(MessageDefinition.newBuilder("Test")
-                        .addField("", "string", "testId", 1, null, null, null)
+                        .addField("", "string", "testId", 1, null, null)
                         .build())
                 .build();
         final Descriptor test = dynamicSchema.getMessageDescriptor("Test");
@@ -158,8 +158,7 @@ class BruteForceConverterTest {
                 AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG, "http://localhost:" + S3_MOCK.getHttpPort(),
                 AbstractLargeMessageConfig.S3_REGION_CONFIG, "us-east-1",
                 AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, "foo",
-                AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, "bar",
-                AbstractLargeMessageConfig.S3_ENABLE_PATH_STYLE_ACCESS_CONFIG, true
+                AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, "bar"
         );
     }
 
