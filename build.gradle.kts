@@ -60,6 +60,6 @@ subprojects {
         "testImplementation"(group = "org.assertj", name = "assertj-core", version = "3.25.1")
 
         val log4jVersion: String by project
-        "testImplementation"(group = "org.apache.logging.log4j", name = "log4j-slf4j-impl", version = log4jVersion)
+        "testImplementation"(group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version = log4jVersion)
     }
 }
