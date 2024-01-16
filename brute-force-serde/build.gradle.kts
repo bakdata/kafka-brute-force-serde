@@ -5,7 +5,7 @@ description = "Kafka SerDe that deserializes messages of an unknown serializatio
 
 plugins {
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
-    id("com.google.protobuf") version "0.9.4"
+    id("com.google.protobuf") version "0.8.18"
 }
 
 repositories {
@@ -47,7 +47,7 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.25.2"
+        artifact = "com.google.protobuf:protoc:3.18.1"
     }
 }
 
