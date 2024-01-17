@@ -39,6 +39,7 @@ import io.confluent.connect.json.JsonSchemaConverter;
 import io.confluent.connect.protobuf.ProtobufConverter;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
+import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema.ProtobufMeta;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.dynamic.DynamicSchema;
 import io.confluent.kafka.schemaregistry.protobuf.dynamic.MessageDefinition;
@@ -75,7 +76,6 @@ import org.apache.kafka.connect.storage.Converter;
 import org.apache.kafka.connect.storage.StringConverter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -162,7 +162,7 @@ class BruteForceConverterTest {
         final DynamicSchema dynamicSchema = DynamicSchema.newBuilder()
                 .setName("file")
                 .addMessageDefinition(MessageDefinition.newBuilder("Test")
-                        .addField("", "string", "testId", 1, null, null)
+                        .addField("", "string", "testId", 1, null, new ProtobufMeta(null, null, null))
                         .build())
                 .build();
         final Descriptor test = dynamicSchema.getMessageDescriptor("Test");
@@ -324,16 +324,14 @@ class BruteForceConverterTest {
     }
 
     @ParameterizedTest
-    @MethodSource("generateProtobufSerializers")
-    @Disabled
-        //FIXME
-    void shouldConvertJsonKeys(final SerializerFactory<DynamicMessage> factory) throws DescriptorValidationException {
-        final DynamicMessage value = generateDynamicMessage();
+    @MethodSource("generateJsonSerializers")
+    void shouldConvertJsonKeys(final SerializerFactory<JsonTestRecord> factory) {
+        final JsonTestRecord value = new JsonTestRecord("test");
         final Map<String, Object> config = Map.of(
                 BruteForceConverterConfig.CONVERTER_CONFIG,
-                List.of(AvroConverter.class.getName(), ProtobufConverter.class.getName())
+                List.of(AvroConverter.class.getName(), JsonSchemaConverter.class.getName())
         );
-        this.testValueConversion(factory, new KafkaProtobufSerializer<>(), value, config, new ProtobufConverter());
+        this.testKeyConversion(factory, new KafkaJsonSchemaSerializer<>(), value, config, new JsonSchemaConverter());
     }
 
     @ParameterizedTest
@@ -349,8 +347,6 @@ class BruteForceConverterTest {
 
     @ParameterizedTest
     @MethodSource("generateProtobufSerializers")
-    @Disabled
-        //FIXME
     void shouldConvertProtobufKeys(final SerializerFactory<DynamicMessage> factory)
             throws DescriptorValidationException {
         final DynamicMessage value = generateDynamicMessage();
@@ -363,8 +359,6 @@ class BruteForceConverterTest {
 
     @ParameterizedTest
     @MethodSource("generateProtobufSerializers")
-    @Disabled
-        //FIXME
     void shouldConvertProtobufValues(final SerializerFactory<DynamicMessage> factory)
             throws DescriptorValidationException {
         final DynamicMessage value = generateDynamicMessage();
