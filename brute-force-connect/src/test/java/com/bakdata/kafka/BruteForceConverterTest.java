@@ -39,7 +39,6 @@ import io.confluent.connect.json.JsonSchemaConverter;
 import io.confluent.connect.protobuf.ProtobufConverter;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema.ProtobufMeta;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.dynamic.DynamicSchema;
 import io.confluent.kafka.schemaregistry.protobuf.dynamic.MessageDefinition;
@@ -162,7 +161,7 @@ class BruteForceConverterTest {
         final DynamicSchema dynamicSchema = DynamicSchema.newBuilder()
                 .setName("file")
                 .addMessageDefinition(MessageDefinition.newBuilder("Test")
-                        .addField("", "string", "testId", 1, null, new ProtobufMeta(null, null, null))
+                        .addField(null, "string", "testId", 1, null, null)
                         .build())
                 .build();
         final Descriptor test = dynamicSchema.getMessageDescriptor("Test");
