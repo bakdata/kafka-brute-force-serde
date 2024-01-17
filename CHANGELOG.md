@@ -1,4 +1,6 @@
 # Change Log
+- no changes!
+
 
 ## [1.2.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.2.0) (2022-05-31)
 [Full Changelog](https://github.com/bakdata/kafka-brute-force-serde/compare/1.1.1...1.2.0)
