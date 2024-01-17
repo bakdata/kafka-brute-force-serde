@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022 bakdata
+ * Copyright (c) 2024 bakdata
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,11 +28,11 @@ import static com.bakdata.kafka.BruteForceConverterTest.newGenericRecord;
 import static net.mguenther.kafka.junit.Wait.delay;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.adobe.testing.s3mock.junit5.S3MockExtension;
 import com.bakdata.schemaregistrymock.junit5.SchemaRegistryMockExtension;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerializer;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -55,11 +55,47 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.containers.localstack.LocalStackContainer;
+import org.testcontainers.containers.localstack.LocalStackContainer.Service;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 
+@Testcontainers
 class BruteForceConverterIntegrationTest {
-    @RegisterExtension
-    static final S3MockExtension S3_MOCK = S3MockExtension.builder().silent()
-            .withSecureConnection(false).build();
+
+    private static final DockerImageName LOCAL_STACK_IMAGE = DockerImageName.parse("localstack/localstack")
+            .withTag("1.3.1");
+    @Container
+    private static final LocalStackContainer LOCAL_STACK_CONTAINER = new LocalStackContainer(LOCAL_STACK_IMAGE)
+            .withServices(Service.S3);
+
+    static S3Client getS3Client() {
+        return S3Client.builder()
+                .endpointOverride(getEndpointOverride())
+                .credentialsProvider(StaticCredentialsProvider.create(getCredentials()))
+                .region(getRegion())
+                .build();
+    }
+
+    private static Region getRegion() {
+        return Region.of(LOCAL_STACK_CONTAINER.getRegion());
+    }
+
+    private static AwsBasicCredentials getCredentials() {
+        return AwsBasicCredentials.create(
+                LOCAL_STACK_CONTAINER.getAccessKey(), LOCAL_STACK_CONTAINER.getSecretKey()
+        );
+    }
+
+    private static URI getEndpointOverride() {
+        return LOCAL_STACK_CONTAINER.getEndpointOverride(Service.S3);
+    }
     private static final String BUCKET_NAME = "testbucket";
     private static final String TOPIC = "input";
     @RegisterExtension
@@ -69,12 +105,13 @@ class BruteForceConverterIntegrationTest {
 
     private static Properties createS3BackedProperties() {
         final Properties properties = new Properties();
-        properties.put(AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG, "http://localhost:" + S3_MOCK.getHttpPort());
-        properties.put(AbstractLargeMessageConfig.S3_REGION_CONFIG, "us-east-1");
-        properties.put(AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, "foo");
-        properties.put(AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, "bar");
-        properties.put(AbstractLargeMessageConfig.S3_ENABLE_PATH_STYLE_ACCESS_CONFIG, true);
-        properties.put(AbstractLargeMessageConfig.BASE_PATH_CONFIG, String.format("s3://%s/", BUCKET_NAME));
+        final AwsBasicCredentials credentials = getCredentials();
+        properties.setProperty(AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG,
+                getEndpointOverride().toString());
+        properties.setProperty(AbstractLargeMessageConfig.S3_REGION_CONFIG, getRegion().id());
+        properties.setProperty(AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, credentials.accessKeyId());
+        properties.setProperty(AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, credentials.secretAccessKey());
+        properties.setProperty(AbstractLargeMessageConfig.BASE_PATH_CONFIG, String.format("s3://%s/", BUCKET_NAME));
         return properties;
     }
 
@@ -85,7 +122,9 @@ class BruteForceConverterIntegrationTest {
     @BeforeEach
     void setUp() throws IOException {
         this.outputFile = Files.createTempFile("test", "temp");
-        S3_MOCK.createS3Client().createBucket(BUCKET_NAME);
+        getS3Client().createBucket(CreateBucketRequest.builder()
+                .bucket(BUCKET_NAME)
+                .build());
         this.kafkaCluster = this.createCluster();
         this.kafkaCluster.start();
     }
@@ -130,13 +169,13 @@ class BruteForceConverterIntegrationTest {
 
     private Properties config() {
         final Properties properties = new Properties();
-        properties.put(ConnectorConfig.NAME_CONFIG, "test");
-        properties.put(ConnectorConfig.CONNECTOR_CLASS_CONFIG, "FileStreamSink");
-        properties.put(SinkConnector.TOPICS_CONFIG, TOPIC);
-        properties.put(FileStreamSinkConnector.FILE_CONFIG, this.outputFile.toString());
-        properties.put(ConnectorConfig.KEY_CONVERTER_CLASS_CONFIG, StringConverter.class.getName());
-        properties.put(ConnectorConfig.VALUE_CONVERTER_CLASS_CONFIG, BruteForceConverter.class.getName());
-        properties.put(withValuePrefix(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG),
+        properties.setProperty(ConnectorConfig.NAME_CONFIG, "test");
+        properties.setProperty(ConnectorConfig.CONNECTOR_CLASS_CONFIG, "FileStreamSink");
+        properties.setProperty(SinkConnector.TOPICS_CONFIG, TOPIC);
+        properties.setProperty(FileStreamSinkConnector.FILE_CONFIG, this.outputFile.toString());
+        properties.setProperty(ConnectorConfig.KEY_CONVERTER_CLASS_CONFIG, StringConverter.class.getName());
+        properties.setProperty(ConnectorConfig.VALUE_CONVERTER_CLASS_CONFIG, BruteForceConverter.class.getName());
+        properties.setProperty(withValuePrefix(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG),
                 this.schemaRegistry.getUrl());
         createS3BackedProperties().forEach((key, value) -> properties.put(withValuePrefix(key), value));
         return properties;
@@ -154,7 +193,7 @@ class BruteForceConverterIntegrationTest {
     private Properties createBaseProducerProperties() {
         final Properties properties = new Properties();
         properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.kafkaCluster.getBrokerList());
+        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.kafkaCluster.getBrokerList());
         return properties;
     }
 
@@ -167,7 +206,7 @@ class BruteForceConverterIntegrationTest {
     private Properties createAvroProducerProperties() {
         final Properties properties = this.createBaseProducerProperties();
         properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GenericAvroSerializer.class);
-        properties.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, this.schemaRegistry.getUrl());
+        properties.setProperty(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, this.schemaRegistry.getUrl());
         return properties;
     }
 }

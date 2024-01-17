@@ -4,7 +4,7 @@ import com.google.protobuf.gradle.protoc
 description = "Kafka SerDe that deserializes messages of an unknown serialization format"
 
 plugins {
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.2.1"
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
     id("com.google.protobuf") version "0.8.18"
 }
 
@@ -26,13 +26,12 @@ dependencies {
     testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde", version = confluentVersion)
     testImplementation(group = "io.confluent", name = "kafka-streams-json-schema-serde", version = confluentVersion)
 
-    testImplementation(group = "com.adobe.testing", name = "s3mock-junit5", version = "2.1.8") {
-        exclude(group = "ch.qos.logback")
-        exclude(group = "org.apache.logging.log4j", module = "log4j-to-slf4j")
-    }
+    val testContainersVersion: String by project
+    testImplementation(group = "org.testcontainers", name = "junit-jupiter", version = testContainersVersion)
+    testImplementation(group = "org.testcontainers", name = "localstack", version = testContainersVersion)
     testImplementation(group = "org.jooq", name = "jool", version = "0.9.14")
 
-    val fluentKafkaVersion = "2.5.1"
+    val fluentKafkaVersion = "2.11.3"
     testImplementation(
         group = "com.bakdata.fluent-kafka-streams-tests",
         name = "fluent-kafka-streams-tests-junit5",

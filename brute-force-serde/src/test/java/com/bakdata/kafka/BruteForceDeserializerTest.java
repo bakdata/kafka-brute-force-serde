@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022 bakdata
+ * Copyright (c) 2024 bakdata
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,6 @@ import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHE
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import com.adobe.testing.s3mock.junit5.S3MockExtension;
 import com.bakdata.Id;
 import com.bakdata.fluent_kafka_streams_tests.TestTopology;
 import com.bakdata.kafka.Test.ProtobufRecord;
@@ -41,6 +40,7 @@ import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import io.confluent.kafka.streams.serdes.json.KafkaJsonSchemaSerde;
 import io.confluent.kafka.streams.serdes.protobuf.KafkaProtobufSerde;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,15 +71,50 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.jooq.lambda.Seq;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.testcontainers.containers.localstack.LocalStackContainer;
+import org.testcontainers.containers.localstack.LocalStackContainer.Service;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 
+@Testcontainers
 class BruteForceDeserializerTest {
-    @RegisterExtension
-    static final S3MockExtension S3_MOCK = S3MockExtension.builder().silent()
-            .withSecureConnection(false).build();
+
+    private static final DockerImageName LOCAL_STACK_IMAGE = DockerImageName.parse("localstack/localstack")
+            .withTag("1.3.1");
+    @Container
+    private static final LocalStackContainer LOCAL_STACK_CONTAINER = new LocalStackContainer(LOCAL_STACK_IMAGE)
+            .withServices(Service.S3);
+
+    static S3Client getS3Client() {
+        return S3Client.builder()
+                .endpointOverride(getEndpointOverride())
+                .credentialsProvider(StaticCredentialsProvider.create(getCredentials()))
+                .region(getRegion())
+                .build();
+    }
+
+    private static Region getRegion() {
+        return Region.of(LOCAL_STACK_CONTAINER.getRegion());
+    }
+
+    private static AwsBasicCredentials getCredentials() {
+        return AwsBasicCredentials.create(
+                LOCAL_STACK_CONTAINER.getAccessKey(), LOCAL_STACK_CONTAINER.getSecretKey()
+        );
+    }
+
+    private static URI getEndpointOverride() {
+        return LOCAL_STACK_CONTAINER.getEndpointOverride(Service.S3);
+    }
 
     private static final String INPUT_TOPIC = "input";
     private static final String OUTPUT_TOPIC = "output";
@@ -177,12 +212,12 @@ class BruteForceDeserializerTest {
     }
 
     private static Map<String, Object> getS3EndpointConfig() {
+        final AwsBasicCredentials credentials = getCredentials();
         return Map.of(
-                AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG, "http://localhost:" + S3_MOCK.getHttpPort(),
-                AbstractLargeMessageConfig.S3_REGION_CONFIG, "us-east-1",
-                AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, "foo",
-                AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, "bar",
-                AbstractLargeMessageConfig.S3_ENABLE_PATH_STYLE_ACCESS_CONFIG, true
+                AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG, getEndpointOverride().toString(),
+                AbstractLargeMessageConfig.S3_REGION_CONFIG, getRegion().id(),
+                AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, credentials.accessKeyId(),
+                AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, credentials.secretAccessKey()
         );
     }
 
@@ -329,7 +364,7 @@ class BruteForceDeserializerTest {
     void shouldReadBytesValues(final SerdeFactory<byte[]> factory) {
         final Properties properties = new Properties();
         // this makes StringDeserializer fail
-        properties.put("value.deserializer.encoding", "missing");
+        properties.setProperty("value.deserializer.encoding", "missing");
 
         final byte[] value = {1, 0};
         this.testValueTopology(factory, properties, Serdes.ByteArray(), value);
@@ -340,7 +375,7 @@ class BruteForceDeserializerTest {
     void shouldReadBytesKeys(final SerdeFactory<byte[]> factory) {
         final Properties properties = new Properties();
         // this makes StringDeserializer fail
-        properties.put("key.deserializer.encoding", "missing");
+        properties.setProperty("key.deserializer.encoding", "missing");
 
         final byte[] value = {1, 0};
         this.testKeyTopology(factory, properties, Serdes.ByteArray(), value);
@@ -389,7 +424,9 @@ class BruteForceDeserializerTest {
     private <T> void testValueTopology(final SerdeFactory<T> factory, final Properties properties, final Serde<T> serde,
             final T value) {
         final String bucket = "bucket";
-        S3_MOCK.createS3Client().createBucket(bucket);
+        getS3Client().createBucket(CreateBucketRequest.builder()
+                .bucket(bucket)
+                .build());
         this.createTopology(p -> createValueTopology(p, serde.getClass()), properties);
 
         final Map<String, Object> config = Map.of(
@@ -416,7 +453,9 @@ class BruteForceDeserializerTest {
     private <T> void testKeyTopology(final SerdeFactory<T> factory, final Properties properties, final Serde<T> serde,
             final T value) {
         final String bucket = "bucket";
-        S3_MOCK.createS3Client().createBucket(bucket);
+        getS3Client().createBucket(CreateBucketRequest.builder()
+                .bucket(bucket)
+                .build());
         this.createTopology(p -> createKeyTopology(p, serde.getClass()), properties);
 
         final Map<String, Object> config = Map.of(

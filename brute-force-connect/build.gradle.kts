@@ -23,11 +23,10 @@ dependencies {
     testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde", version = confluentVersion)
     testImplementation(group = "io.confluent", name = "kafka-streams-json-schema-serde", version = confluentVersion)
 
-    testImplementation(group = "com.adobe.testing", name = "s3mock-junit5", version = "2.1.8") {
-        exclude(group = "ch.qos.logback")
-        exclude(group = "org.apache.logging.log4j", module = "log4j-to-slf4j")
-    }
-    val fluentKafkaVersion = "2.5.1"
+    val testContainersVersion: String by project
+    testImplementation(group = "org.testcontainers", name = "junit-jupiter", version = testContainersVersion)
+    testImplementation(group = "org.testcontainers", name = "localstack", version = testContainersVersion)
+    val fluentKafkaVersion = "2.11.3"
     testImplementation(
         group = "com.bakdata.fluent-kafka-streams-tests",
         name = "schema-registry-mock-junit5",
@@ -35,7 +34,7 @@ dependencies {
     )
 
     testImplementation(group = "com.bakdata.kafka", name = "large-message-serde", version = largeMessageVersion)
-    testImplementation(group = "net.mguenther.kafka", name = "kafka-junit", version = kafkaVersion) {
+    testImplementation(group = "net.mguenther.kafka", name = "kafka-junit", version = "3.5.0") {
         exclude(group = "org.slf4j", module = "slf4j-log4j12")
     }
     testImplementation(group = "org.apache.kafka", name = "connect-file", version = kafkaVersion)
