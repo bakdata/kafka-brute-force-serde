@@ -62,8 +62,8 @@ subprojects {
         val log4jVersion: String by project
         "testImplementation"(group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version = log4jVersion)
     }
-}
 
-configure<JacocoPluginExtension> {
-    toolVersion = "0.8.11"
+    configure<JacocoPluginExtension> {
+        toolVersion = "0.8.11"
+    }
 }
