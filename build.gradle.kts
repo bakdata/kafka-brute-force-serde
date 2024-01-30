@@ -1,7 +1,7 @@
 plugins {
     id("net.researchgate.release") version "3.0.2"
-    id("com.bakdata.sonar") version "1.1.10"
-    id("com.bakdata.sonatype") version "1.1.10"
+    id("com.bakdata.sonar") version "1.1.11"
+    id("com.bakdata.sonatype") version "1.1.11"
     id("org.hildan.github.changelog") version "1.12.1"
     id("io.freefair.lombok") version "6.6.3"
 }
@@ -61,9 +61,5 @@ subprojects {
 
         val log4jVersion: String by project
         "testImplementation"(group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version = log4jVersion)
-    }
-
-    configure<JacocoPluginExtension> {
-        toolVersion = "0.8.11"
     }
 }
