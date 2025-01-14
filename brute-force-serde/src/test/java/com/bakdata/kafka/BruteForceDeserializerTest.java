@@ -88,6 +88,9 @@ class BruteForceDeserializerTest {
     private static final LocalStackContainer LOCAL_STACK_CONTAINER = new LocalStackContainer(LOCAL_STACK_IMAGE)
             .withServices(Service.S3);
     private static final String SCHEMA_REGISTRY_URL = "mock://";
+    private static final String INPUT_TOPIC = "input";
+    private static final String OUTPUT_TOPIC = "output";
+    private TestTopology<Object, Object> topology = null;
 
     static S3Client getS3Client() {
         return S3Client.builder()
@@ -96,24 +99,6 @@ class BruteForceDeserializerTest {
                 .region(getRegion())
                 .build();
     }
-
-    private static Region getRegion() {
-        return Region.of(LOCAL_STACK_CONTAINER.getRegion());
-    }
-
-    private static AwsBasicCredentials getCredentials() {
-        return AwsBasicCredentials.create(
-                LOCAL_STACK_CONTAINER.getAccessKey(), LOCAL_STACK_CONTAINER.getSecretKey()
-        );
-    }
-
-    private static URI getEndpointOverride() {
-        return LOCAL_STACK_CONTAINER.getEndpointOverride(Service.S3);
-    }
-
-    private static final String INPUT_TOPIC = "input";
-    private static final String OUTPUT_TOPIC = "output";
-    private TestTopology<Object, Object> topology = null;
 
     static Stream<Arguments> generateSpecificAvroSerdes() {
         return generateSerdes(new SpecificAvroSerde<>());
@@ -139,6 +124,20 @@ class BruteForceDeserializerTest {
         return generateSerdes(Serdes.ByteArray());
     }
 
+    private static Region getRegion() {
+        return Region.of(LOCAL_STACK_CONTAINER.getRegion());
+    }
+
+    private static AwsBasicCredentials getCredentials() {
+        return AwsBasicCredentials.create(
+                LOCAL_STACK_CONTAINER.getAccessKey(), LOCAL_STACK_CONTAINER.getSecretKey()
+        );
+    }
+
+    private static URI getEndpointOverride() {
+        return LOCAL_STACK_CONTAINER.getEndpointOverride(Service.S3);
+    }
+
     private static <T> Stream<Arguments> generateSerdes(final Serde<T> baseSerde) {
         return Stream.<Function<Serde<T>, SerdeFactory<T>>>of(
                         BruteForceDeserializerTest::configured,
@@ -160,6 +159,7 @@ class BruteForceDeserializerTest {
 
     private static Map<String, Object> createProperties(final Map<String, Object> properties) {
         properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        properties.put(SCHEMA_REGISTRY_URL_CONFIG, SCHEMA_REGISTRY_URL);
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "test");
         properties.putAll(getS3EndpointConfig());
         return properties;
@@ -243,7 +243,7 @@ class BruteForceDeserializerTest {
                 .withValueSerde(Serdes.Integer())
                 .add(null, 1);
         final List<ProducerRecord<byte[], Integer>> records = this.topology.streamOutput()
-                        .withKeySerde(Serdes.ByteArray())
+                .withKeySerde(Serdes.ByteArray())
                 .withValueSerde(Serdes.Integer())
                 .toList();
         assertThat(records)
@@ -261,7 +261,7 @@ class BruteForceDeserializerTest {
                 .withValueSerde(Serdes.String())
                 .add(1, null);
         final List<ProducerRecord<Integer, byte[]>> records = this.topology.streamOutput()
-                        .withKeySerde(Serdes.Integer())
+                .withKeySerde(Serdes.Integer())
                 .withValueSerde(Serdes.ByteArray())
                 .toList();
         assertThat(records)
@@ -439,7 +439,7 @@ class BruteForceDeserializerTest {
 
         serde.configure(config, false);
         final List<ProducerRecord<Integer, T>> records = this.topology.streamOutput()
-                        .withKeySerde(Serdes.Integer())
+                .withKeySerde(Serdes.Integer())
                 .withValueSerde(serde)
                 .toList();
         assertThat(records)
@@ -469,7 +469,7 @@ class BruteForceDeserializerTest {
 
         serde.configure(config, true);
         final List<ProducerRecord<T, Integer>> records = this.topology.streamOutput()
-                        .withKeySerde(serde)
+                .withKeySerde(serde)
                 .withValueSerde(Serdes.Integer())
                 .toList();
         assertThat(records)
