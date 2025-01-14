@@ -1,10 +1,5 @@
 description = "Kafka Connect Converter that deserializes messages of an unknown serialization format"
 
-repositories {
-    // required for kafka-streams-json-schema-serde dependency
-    maven(url = "https://jitpack.io")
-}
-
 dependencies {
     api(project(":brute-force-core"))
 
@@ -20,22 +15,24 @@ dependencies {
     testImplementation(group = "io.confluent", name = "kafka-connect-protobuf-converter", version = confluentVersion)
     testImplementation(group = "io.confluent", name = "kafka-connect-json-schema-converter", version = confluentVersion)
 
+    testImplementation(group = "io.confluent", name = "kafka-streams-avro-serde", version = confluentVersion)
     testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde", version = confluentVersion)
     testImplementation(group = "io.confluent", name = "kafka-streams-json-schema-serde", version = confluentVersion)
 
     val testContainersVersion: String by project
     testImplementation(group = "org.testcontainers", name = "junit-jupiter", version = testContainersVersion)
     testImplementation(group = "org.testcontainers", name = "localstack", version = testContainersVersion)
-    val fluentKafkaVersion = "2.11.3"
-    testImplementation(
-        group = "com.bakdata.fluent-kafka-streams-tests",
-        name = "schema-registry-mock-junit5",
-        version = fluentKafkaVersion
-    )
 
     testImplementation(group = "com.bakdata.kafka", name = "large-message-serde", version = largeMessageVersion)
-    testImplementation(group = "net.mguenther.kafka", name = "kafka-junit", version = "3.5.0") {
-        exclude(group = "org.slf4j", module = "slf4j-log4j12")
-    }
     testImplementation(group = "org.apache.kafka", name = "connect-file", version = kafkaVersion)
+    testImplementation(group = "org.apache.kafka", name = "connect-runtime", version = kafkaVersion)
+    testImplementation(
+        group = "org.apache.kafka",
+        name = "connect-runtime",
+        version = kafkaVersion,
+        classifier = "test"
+    )
+    testImplementation(group = "org.apache.kafka", name = "kafka-clients", version = kafkaVersion, classifier = "test")
+    testImplementation(group = "org.apache.kafka", name = "kafka_2.13", version = kafkaVersion)
+    testImplementation(group = "org.apache.kafka", name = "kafka_2.13", version = kafkaVersion, classifier = "test")
 }

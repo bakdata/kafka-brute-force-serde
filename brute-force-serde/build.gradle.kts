@@ -1,16 +1,8 @@
-import com.google.protobuf.gradle.protobuf
-import com.google.protobuf.gradle.protoc
-
 description = "Kafka SerDe that deserializes messages of an unknown serialization format"
 
 plugins {
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
-    id("com.google.protobuf") version "0.8.18"
-}
-
-repositories {
-    // required for kafka-streams-json-schema-serde dependency
-    maven(url = "https://jitpack.io")
+    id("com.google.protobuf") version "0.9.4"
 }
 
 dependencies {
@@ -29,30 +21,18 @@ dependencies {
     val testContainersVersion: String by project
     testImplementation(group = "org.testcontainers", name = "junit-jupiter", version = testContainersVersion)
     testImplementation(group = "org.testcontainers", name = "localstack", version = testContainersVersion)
-    testImplementation(group = "org.jooq", name = "jool", version = "0.9.14")
+    testImplementation(group = "org.jooq", name = "jool", version = "0.9.15")
 
-    val fluentKafkaVersion = "2.11.3"
+    val fluentKafkaVersion = "3.0.0"
     testImplementation(
         group = "com.bakdata.fluent-kafka-streams-tests",
         name = "fluent-kafka-streams-tests-junit5",
-        version = fluentKafkaVersion
-    )
-
-    testImplementation(
-        group = "com.bakdata.fluent-kafka-streams-tests",
-        name = "schema-registry-mock-junit5",
         version = fluentKafkaVersion
     )
 }
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.18.1"
-    }
-}
-
-sourceSets {
-    test {
-        java.srcDirs("build/generated/source/proto/test/java")
+        artifact = "com.google.protobuf:protoc:3.25.5"
     }
 }

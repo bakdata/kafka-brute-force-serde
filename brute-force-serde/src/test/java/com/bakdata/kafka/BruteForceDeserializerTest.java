@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2024 bakdata
+ * Copyright (c) 2025 bakdata
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,10 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import com.bakdata.Id;
 import com.bakdata.fluent_kafka_streams_tests.TestTopology;
 import com.bakdata.kafka.Test.ProtobufRecord;
-import com.bakdata.schemaregistrymock.SchemaRegistryMock;
-import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
-import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
@@ -44,7 +40,6 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -68,7 +63,6 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.StreamsException;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
-import org.jooq.lambda.Seq;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -93,6 +87,7 @@ class BruteForceDeserializerTest {
     @Container
     private static final LocalStackContainer LOCAL_STACK_CONTAINER = new LocalStackContainer(LOCAL_STACK_IMAGE)
             .withServices(Service.S3);
+    private static final String SCHEMA_REGISTRY_URL = "mock://";
 
     static S3Client getS3Client() {
         return S3Client.builder()
@@ -163,14 +158,15 @@ class BruteForceDeserializerTest {
         };
     }
 
-    private static Properties createProperties(final Properties properties) {
-        properties.setProperty(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy");
-        properties.setProperty(StreamsConfig.APPLICATION_ID_CONFIG, "test");
+    private static Map<String, Object> createProperties(final Map<String, Object> properties) {
+        properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "test");
         properties.putAll(getS3EndpointConfig());
         return properties;
     }
 
-    private static Topology createValueTopology(final Properties properties, final Class<? extends Serde> serdeClass) {
+    private static Topology createValueTopology(final Map<String, Object> properties,
+            final Class<? extends Serde> serdeClass) {
         final StreamsBuilder builder = new StreamsBuilder();
         properties.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, IntegerSerde.class);
         properties.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, serdeClass);
@@ -183,7 +179,8 @@ class BruteForceDeserializerTest {
         return builder.build();
     }
 
-    private static Topology createKeyTopology(final Properties properties, final Class<? extends Serde> serdeClass) {
+    private static Topology createKeyTopology(final Map<String, Object> properties,
+            final Class<? extends Serde> serdeClass) {
         final StreamsBuilder builder = new StreamsBuilder();
         properties.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, serdeClass);
         properties.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, IntegerSerde.class);
@@ -240,14 +237,14 @@ class BruteForceDeserializerTest {
 
     @Test
     void shouldReadNullKey() {
-        this.createTopology(properties -> createKeyTopology(properties, StringSerde.class), new Properties());
+        this.createTopology(properties -> createKeyTopology(properties, StringSerde.class), new HashMap<>());
         this.topology.input()
                 .withKeySerde(Serdes.String())
                 .withValueSerde(Serdes.Integer())
                 .add(null, 1);
-        final List<ProducerRecord<byte[], Integer>> records = Seq.seq(this.topology.streamOutput()
+        final List<ProducerRecord<byte[], Integer>> records = this.topology.streamOutput()
                         .withKeySerde(Serdes.ByteArray())
-                        .withValueSerde(Serdes.Integer()))
+                .withValueSerde(Serdes.Integer())
                 .toList();
         assertThat(records)
                 .hasSize(1)
@@ -258,14 +255,14 @@ class BruteForceDeserializerTest {
 
     @Test
     void shouldReadNullValue() {
-        this.createTopology(properties -> createValueTopology(properties, StringSerde.class), new Properties());
+        this.createTopology(properties -> createValueTopology(properties, StringSerde.class), new HashMap<>());
         this.topology.input()
                 .withKeySerde(Serdes.Integer())
                 .withValueSerde(Serdes.String())
                 .add(1, null);
-        final List<ProducerRecord<Integer, byte[]>> records = Seq.seq(this.topology.streamOutput()
+        final List<ProducerRecord<Integer, byte[]>> records = this.topology.streamOutput()
                         .withKeySerde(Serdes.Integer())
-                        .withValueSerde(Serdes.ByteArray()))
+                .withValueSerde(Serdes.ByteArray())
                 .toList();
         assertThat(records)
                 .hasSize(1)
@@ -277,7 +274,7 @@ class BruteForceDeserializerTest {
     @Test
     void shouldIgnoreNoMatch() {
         final byte[] value = {1, 0};
-        final Properties properties = new Properties();
+        final Map<String, Object> properties = new HashMap<>();
         properties.put(BruteForceSerdeConfig.SERDES_CONFIG, List.of());
         this.testValueTopology(configured(Serdes.ByteArray()), properties, Serdes.ByteArray(), value);
     }
@@ -285,7 +282,7 @@ class BruteForceDeserializerTest {
     @Test
     void shouldFailIfIgnoreNoMatchIsDisabled() {
         final byte[] value = {1, 0};
-        final Properties properties = new Properties();
+        final Map<String, Object> properties = new HashMap<>();
         properties.put(AbstractBruteForceConfig.IGNORE_NO_MATCH_CONFIG, false);
         properties.put(BruteForceSerdeConfig.SERDES_CONFIG, List.of(GenericAvroSerde.class.getName()));
         final SerdeFactory<byte[]> serdeFactory = configured(Serdes.ByteArray());
@@ -304,7 +301,7 @@ class BruteForceDeserializerTest {
         final SerdeFactory<GenericRecord> factory = createLargeMessageSerde(new GenericAvroSerde(), 0, true);
         final GenericAvroSerde serde = new GenericAvroSerde();
 
-        final Properties properties = new Properties();
+        final Map<String, Object> properties = new HashMap<>();
         properties.put(AbstractBruteForceConfig.LARGE_MESSAGE_ENABLED_CONFIG, false);
         properties.put(AbstractBruteForceConfig.IGNORE_NO_MATCH_CONFIG, false);
         properties.put(BruteForceSerdeConfig.SERDES_CONFIG, List.of(GenericAvroSerde.class.getName()));
@@ -321,50 +318,50 @@ class BruteForceDeserializerTest {
     @MethodSource("generateStringSerdes")
     void shouldReadStringValues(final SerdeFactory<String> factory) {
         final String value = "foo";
-        this.testValueTopology(factory, new Properties(), Serdes.String(), value);
+        this.testValueTopology(factory, new HashMap<>(), Serdes.String(), value);
     }
 
     @ParameterizedTest
     @MethodSource("generateStringSerdes")
     void shouldReadStringKeys(final SerdeFactory<String> factory) {
         final String value = "foo";
-        this.testKeyTopology(factory, new Properties(), Serdes.String(), value);
+        this.testKeyTopology(factory, new HashMap<>(), Serdes.String(), value);
     }
 
     @ParameterizedTest
     @MethodSource("generateSpecificAvroSerdes")
     void shouldReadSpecificAvroValues(final SerdeFactory<SpecificRecord> factory) {
         final SpecificRecord value = Id.newBuilder().setId("").build();
-        this.testValueTopology(factory, new Properties(), new SpecificAvroSerde<>(), value);
+        this.testValueTopology(factory, new HashMap<>(), new SpecificAvroSerde<>(), value);
     }
 
     @ParameterizedTest
     @MethodSource("generateSpecificAvroSerdes")
     void shouldReadSpecificAvroKeys(final SerdeFactory<SpecificRecord> factory) {
         final SpecificRecord value = Id.newBuilder().setId("").build();
-        this.testKeyTopology(factory, new Properties(), new SpecificAvroSerde<>(), value);
+        this.testKeyTopology(factory, new HashMap<>(), new SpecificAvroSerde<>(), value);
     }
 
     @ParameterizedTest
     @MethodSource("generateGenericAvroSerdes")
     void shouldReadGenericAvroValues(final SerdeFactory<GenericRecord> factory) {
         final GenericRecord value = newGenericRecord();
-        this.testValueTopology(factory, new Properties(), new GenericAvroSerde(), value);
+        this.testValueTopology(factory, new HashMap<>(), new GenericAvroSerde(), value);
     }
 
     @ParameterizedTest
     @MethodSource("generateGenericAvroSerdes")
     void shouldReadGenericAvroKeys(final SerdeFactory<GenericRecord> factory) {
         final GenericRecord value = newGenericRecord();
-        this.testKeyTopology(factory, new Properties(), new GenericAvroSerde(), value);
+        this.testKeyTopology(factory, new HashMap<>(), new GenericAvroSerde(), value);
     }
 
     @ParameterizedTest
     @MethodSource("generateByteArraySerdes")
     void shouldReadBytesValues(final SerdeFactory<byte[]> factory) {
-        final Properties properties = new Properties();
+        final Map<String, Object> properties = new HashMap<>();
         // this makes StringDeserializer fail
-        properties.setProperty("value.deserializer.encoding", "missing");
+        properties.put("value.deserializer.encoding", "missing");
 
         final byte[] value = {1, 0};
         this.testValueTopology(factory, properties, Serdes.ByteArray(), value);
@@ -373,9 +370,9 @@ class BruteForceDeserializerTest {
     @ParameterizedTest
     @MethodSource("generateByteArraySerdes")
     void shouldReadBytesKeys(final SerdeFactory<byte[]> factory) {
-        final Properties properties = new Properties();
+        final Map<String, Object> properties = new HashMap<>();
         // this makes StringDeserializer fail
-        properties.setProperty("key.deserializer.encoding", "missing");
+        properties.put("key.deserializer.encoding", "missing");
 
         final byte[] value = {1, 0};
         this.testKeyTopology(factory, properties, Serdes.ByteArray(), value);
@@ -385,7 +382,7 @@ class BruteForceDeserializerTest {
     @MethodSource("generateProtobufSerdes")
     void shouldReadProtobufValues(final SerdeFactory<ProtobufRecord> factory) {
         final ProtobufRecord value = ProtobufRecord.newBuilder().setName("Test").build();
-        final Properties properties = new Properties();
+        final Map<String, Object> properties = new HashMap<>();
         properties.put(BruteForceSerdeConfig.SERDES_CONFIG,
                 List.of(GenericAvroSerde.class.getName(), KafkaProtobufSerde.class.getName()));
         this.testValueTopology(factory, properties, new KafkaProtobufSerde<>(ProtobufRecord.class), value);
@@ -395,7 +392,7 @@ class BruteForceDeserializerTest {
     @MethodSource("generateProtobufSerdes")
     void shouldReadProtobufKeys(final SerdeFactory<ProtobufRecord> factory) {
         final ProtobufRecord value = ProtobufRecord.newBuilder().setName("Test").build();
-        final Properties properties = new Properties();
+        final Map<String, Object> properties = new HashMap<>();
         properties.put(BruteForceSerdeConfig.SERDES_CONFIG,
                 List.of(GenericAvroSerde.class.getName(), KafkaProtobufSerde.class.getName()));
         this.testKeyTopology(factory, properties, new KafkaProtobufSerde<>(ProtobufRecord.class), value);
@@ -405,7 +402,7 @@ class BruteForceDeserializerTest {
     @MethodSource("generateJsonSerdes")
     void shouldReadJsonValues(final SerdeFactory<JsonTestRecord> factory) {
         final JsonTestRecord value = new JsonTestRecord("test");
-        final Properties properties = new Properties();
+        final Map<String, Object> properties = new HashMap<>();
         properties.put(BruteForceSerdeConfig.SERDES_CONFIG,
                 List.of(GenericAvroSerde.class.getName(), KafkaJsonSchemaSerde.class.getName()));
         this.testValueTopology(factory, properties, new KafkaJsonSchemaSerde<>(JsonTestRecord.class), value);
@@ -415,13 +412,14 @@ class BruteForceDeserializerTest {
     @MethodSource("generateJsonSerdes")
     void shouldReadJsonKeys(final SerdeFactory<JsonTestRecord> factory) {
         final JsonTestRecord value = new JsonTestRecord("test");
-        final Properties properties = new Properties();
+        final Map<String, Object> properties = new HashMap<>();
         properties.put(BruteForceSerdeConfig.SERDES_CONFIG,
                 List.of(GenericAvroSerde.class.getName(), KafkaJsonSchemaSerde.class.getName()));
         this.testKeyTopology(factory, properties, new KafkaJsonSchemaSerde<>(JsonTestRecord.class), value);
     }
 
-    private <T> void testValueTopology(final SerdeFactory<T> factory, final Properties properties, final Serde<T> serde,
+    private <T> void testValueTopology(final SerdeFactory<T> factory, final Map<String, Object> properties,
+            final Serde<T> serde,
             final T value) {
         final String bucket = "bucket";
         getS3Client().createBucket(CreateBucketRequest.builder()
@@ -430,7 +428,7 @@ class BruteForceDeserializerTest {
         this.createTopology(p -> createValueTopology(p, serde.getClass()), properties);
 
         final Map<String, Object> config = Map.of(
-                SCHEMA_REGISTRY_URL_CONFIG, this.topology.getSchemaRegistryUrl(),
+                SCHEMA_REGISTRY_URL_CONFIG, SCHEMA_REGISTRY_URL,
                 AbstractLargeMessageConfig.BASE_PATH_CONFIG, "s3://" + bucket + "/"
         );
         final Serde<T> inputSerde = factory.create(config, false);
@@ -440,9 +438,9 @@ class BruteForceDeserializerTest {
                 .add(1, value);
 
         serde.configure(config, false);
-        final List<ProducerRecord<Integer, T>> records = Seq.seq(this.topology.streamOutput()
+        final List<ProducerRecord<Integer, T>> records = this.topology.streamOutput()
                         .withKeySerde(Serdes.Integer())
-                        .withValueSerde(serde))
+                .withValueSerde(serde)
                 .toList();
         assertThat(records)
                 .hasSize(1)
@@ -450,7 +448,8 @@ class BruteForceDeserializerTest {
                 .containsExactlyInAnyOrder(value);
     }
 
-    private <T> void testKeyTopology(final SerdeFactory<T> factory, final Properties properties, final Serde<T> serde,
+    private <T> void testKeyTopology(final SerdeFactory<T> factory, final Map<String, Object> properties,
+            final Serde<T> serde,
             final T value) {
         final String bucket = "bucket";
         getS3Client().createBucket(CreateBucketRequest.builder()
@@ -459,7 +458,7 @@ class BruteForceDeserializerTest {
         this.createTopology(p -> createKeyTopology(p, serde.getClass()), properties);
 
         final Map<String, Object> config = Map.of(
-                SCHEMA_REGISTRY_URL_CONFIG, this.topology.getSchemaRegistryUrl(),
+                SCHEMA_REGISTRY_URL_CONFIG, SCHEMA_REGISTRY_URL,
                 AbstractLargeMessageConfig.BASE_PATH_CONFIG, "s3://" + bucket + "/"
         );
         final Serde<T> inputSerde = factory.create(config, true);
@@ -469,9 +468,9 @@ class BruteForceDeserializerTest {
                 .add(value, 1);
 
         serde.configure(config, true);
-        final List<ProducerRecord<T, Integer>> records = Seq.seq(this.topology.streamOutput()
+        final List<ProducerRecord<T, Integer>> records = this.topology.streamOutput()
                         .withKeySerde(serde)
-                        .withValueSerde(Serdes.Integer()))
+                .withValueSerde(Serdes.Integer())
                 .toList();
         assertThat(records)
                 .hasSize(1)
@@ -479,12 +478,9 @@ class BruteForceDeserializerTest {
                 .containsExactlyInAnyOrder(value);
     }
 
-    private void createTopology(final Function<? super Properties, ? extends Topology> topologyFactory,
-            final Properties properties) {
-        this.topology = new TestTopology<>(topologyFactory, createProperties(properties))
-                .withSchemaRegistryMock(new SchemaRegistryMock(List.of(
-                        new AvroSchemaProvider(), new ProtobufSchemaProvider(), new JsonSchemaProvider()
-                )));
+    private void createTopology(final Function<? super Map<String, Object>, ? extends Topology> topologyFactory,
+            final Map<String, Object> properties) {
+        this.topology = new TestTopology<>(topologyFactory, createProperties(properties));
         this.topology.start();
     }
 
