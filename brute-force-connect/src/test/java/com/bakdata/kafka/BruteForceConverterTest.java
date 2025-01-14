@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2024 bakdata
+ * Copyright (c) 2025 bakdata
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,20 +26,15 @@ package com.bakdata.kafka;
 
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static java.util.Collections.emptyMap;
-import static org.apache.kafka.connect.storage.StringConverterConfig.ENCODING_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import com.bakdata.schemaregistrymock.SchemaRegistryMock;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.DynamicMessage;
 import io.confluent.connect.avro.AvroConverter;
 import io.confluent.connect.json.JsonSchemaConverter;
 import io.confluent.connect.protobuf.ProtobufConverter;
-import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
-import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.dynamic.DynamicSchema;
 import io.confluent.kafka.schemaregistry.protobuf.dynamic.MessageDefinition;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
@@ -73,8 +68,6 @@ import org.apache.kafka.connect.converters.ByteArrayConverter;
 import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.storage.Converter;
 import org.apache.kafka.connect.storage.StringConverter;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -98,11 +91,6 @@ class BruteForceConverterTest {
     @Container
     private static final LocalStackContainer LOCAL_STACK_CONTAINER = new LocalStackContainer(LOCAL_STACK_IMAGE)
             .withServices(Service.S3);
-    private final SchemaRegistryMock schemaRegistry = new SchemaRegistryMock(List.of(
-            new AvroSchemaProvider(),
-            new JsonSchemaProvider(),
-            new ProtobufSchemaProvider()
-    ));
 
     static S3Client getS3Client() {
         return S3Client.builder()
@@ -161,7 +149,7 @@ class BruteForceConverterTest {
         final DynamicSchema dynamicSchema = DynamicSchema.newBuilder()
                 .setName("file")
                 .addMessageDefinition(MessageDefinition.newBuilder("Test")
-                        .addField(null, "string", "testId", 1, null, null)
+                        .addField(null, "string", "testId", 1)
                         .build())
                 .build();
         final Descriptor test = dynamicSchema.getMessageDescriptor("Test");
@@ -216,16 +204,6 @@ class BruteForceConverterTest {
                 )
                 .map(f -> f.apply(baseSerde))
                 .map(Arguments::of);
-    }
-
-    @BeforeEach
-    void setUp() {
-        this.schemaRegistry.start();
-    }
-
-    @AfterEach
-    void tearDown() {
-        this.schemaRegistry.stop();
     }
 
     @Test
@@ -310,7 +288,10 @@ class BruteForceConverterTest {
     @MethodSource("generateByteArraySerializers")
     void shouldConvertByteValues(final SerializerFactory<byte[]> factory) {
         final byte[] value = {1, 0};
-        final Map<String, Object> config = Map.of(ENCODING_CONFIG, "missing");
+        final Map<String, Object> config = Map.of(
+                BruteForceConverterConfig.CONVERTER_CONFIG,
+                List.of(AvroConverter.class.getName(), ByteArrayConverter.class.getName())
+        );
         this.testValueConversion(factory, new ByteArraySerializer(), value, config, new ByteArrayConverter());
     }
 
@@ -318,7 +299,10 @@ class BruteForceConverterTest {
     @MethodSource("generateByteArraySerializers")
     void shouldConvertByteKeys(final SerializerFactory<byte[]> factory) {
         final byte[] value = {1, 0};
-        final Map<String, Object> config = Map.of(ENCODING_CONFIG, "missing");
+        final Map<String, Object> config = Map.of(
+                BruteForceConverterConfig.CONVERTER_CONFIG,
+                List.of(AvroConverter.class.getName(), ByteArrayConverter.class.getName())
+        );
         this.testKeyConversion(factory, new ByteArraySerializer(), value, config, new ByteArrayConverter());
     }
 
@@ -399,7 +383,7 @@ class BruteForceConverterTest {
                 .bucket(bucket)
                 .build());
         final Map<String, Object> config = new HashMap<>(originals);
-        config.put(SCHEMA_REGISTRY_URL_CONFIG, this.schemaRegistry.getUrl());
+        config.put(SCHEMA_REGISTRY_URL_CONFIG, "mock://");
         config.put(AbstractLargeMessageConfig.BASE_PATH_CONFIG, "s3://" + bucket + "/");
         config.putAll(getS3EndpointConfig());
 
