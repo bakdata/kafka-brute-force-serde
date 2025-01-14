@@ -54,6 +54,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.Serdes.ByteArraySerde;
 import org.apache.kafka.common.serialization.Serdes.IntegerSerde;
 import org.apache.kafka.common.serialization.Serdes.StringSerde;
 import org.apache.kafka.streams.KeyValue;
@@ -360,8 +361,8 @@ class BruteForceDeserializerTest {
     @MethodSource("generateByteArraySerdes")
     void shouldReadBytesValues(final SerdeFactory<byte[]> factory) {
         final Map<String, Object> properties = new HashMap<>();
-        // this makes StringDeserializer fail
-        properties.put("value.deserializer.encoding", "missing");
+        properties.put(BruteForceSerdeConfig.SERDES_CONFIG,
+                List.of(GenericAvroSerde.class.getName(), ByteArraySerde.class.getName()));
 
         final byte[] value = {1, 0};
         this.testValueTopology(factory, properties, Serdes.ByteArray(), value);
@@ -371,8 +372,8 @@ class BruteForceDeserializerTest {
     @MethodSource("generateByteArraySerdes")
     void shouldReadBytesKeys(final SerdeFactory<byte[]> factory) {
         final Map<String, Object> properties = new HashMap<>();
-        // this makes StringDeserializer fail
-        properties.put("key.deserializer.encoding", "missing");
+        properties.put(BruteForceSerdeConfig.SERDES_CONFIG,
+                List.of(GenericAvroSerde.class.getName(), ByteArraySerde.class.getName()));
 
         final byte[] value = {1, 0};
         this.testKeyTopology(factory, properties, Serdes.ByteArray(), value);

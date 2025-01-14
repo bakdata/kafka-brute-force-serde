@@ -26,7 +26,6 @@ package com.bakdata.kafka;
 
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static java.util.Collections.emptyMap;
-import static org.apache.kafka.connect.storage.StringConverterConfig.ENCODING_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -289,7 +288,10 @@ class BruteForceConverterTest {
     @MethodSource("generateByteArraySerializers")
     void shouldConvertByteValues(final SerializerFactory<byte[]> factory) {
         final byte[] value = {1, 0};
-        final Map<String, Object> config = Map.of(ENCODING_CONFIG, "missing");
+        final Map<String, Object> config = Map.of(
+                BruteForceConverterConfig.CONVERTER_CONFIG,
+                List.of(AvroConverter.class.getName(), ByteArrayConverter.class.getName())
+        );
         this.testValueConversion(factory, new ByteArraySerializer(), value, config, new ByteArrayConverter());
     }
 
@@ -297,7 +299,10 @@ class BruteForceConverterTest {
     @MethodSource("generateByteArraySerializers")
     void shouldConvertByteKeys(final SerializerFactory<byte[]> factory) {
         final byte[] value = {1, 0};
-        final Map<String, Object> config = Map.of(ENCODING_CONFIG, "missing");
+        final Map<String, Object> config = Map.of(
+                BruteForceConverterConfig.CONVERTER_CONFIG,
+                List.of(AvroConverter.class.getName(), ByteArrayConverter.class.getName())
+        );
         this.testKeyConversion(factory, new ByteArraySerializer(), value, config, new ByteArrayConverter());
     }
 
