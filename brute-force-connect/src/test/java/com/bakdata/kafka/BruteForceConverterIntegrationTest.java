@@ -69,7 +69,7 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 class BruteForceConverterIntegrationTest {
 
     private static final DockerImageName LOCAL_STACK_IMAGE = DockerImageName.parse("localstack/localstack")
-            .withTag("1.3.1");
+            .withTag("4.2.0");
     @Container
     private static final LocalStackContainer LOCAL_STACK_CONTAINER = new LocalStackContainer(LOCAL_STACK_IMAGE)
             .withServices(Service.S3);
