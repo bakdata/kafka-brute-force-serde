@@ -7,7 +7,7 @@ dependencies {
     compileOnly(group = "org.apache.kafka", name = "connect-runtime")
 
     val largeMessageVersion: String by project
-    api(platform("com.bakdata.kafka:large-message-bom$largeMessageVersion"))
+    api(platform("com.bakdata.kafka:large-message-bom:$largeMessageVersion"))
     implementation(group = "com.bakdata.kafka", name = "large-message-connect")
 
     testImplementation(group = "io.confluent", name = "kafka-connect-avro-converter")
