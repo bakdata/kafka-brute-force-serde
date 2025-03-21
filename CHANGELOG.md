@@ -1,8 +1,15 @@
 # Change Log
 
-## [1.3.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.3.0) (2025-01-14)
-[View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/1.3.0...1.3.0)
+## [1.4.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.4.0) (2025-03-21)
+[View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/1.4.0...1.4.0)
 
+
+## [1.4.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.4.0) (2025-03-21)
+[View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/1.3.0...1.4.0)
+
+**Merged pull requests:**
+
+- Upgrade to Kafka 3.9 [\#13](https://github.com/bakdata/kafka-brute-force-serde/pull/13) ([@philipp94831](https://github.com/philipp94831))
 
 ## [1.3.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.3.0) (2025-01-14)
 [View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/1.2.1...1.3.0)
