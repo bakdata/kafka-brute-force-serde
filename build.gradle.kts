@@ -1,8 +1,8 @@
 plugins {
-    id("com.bakdata.release") version "1.4.0"
-    id("com.bakdata.sonar") version "1.4.0"
-    id("com.bakdata.sonatype") version "1.4.1"
-    id("io.freefair.lombok") version "8.4"
+    id("com.bakdata.release") version "1.9.0"
+    id("com.bakdata.sonar") version "1.9.0"
+    id("com.bakdata.sonatype") version "1.9.0"
+    id("io.freefair.lombok") version "8.12.2.1"
 }
 
 allprojects {
@@ -16,19 +16,7 @@ allprojects {
     repositories {
         mavenCentral()
         maven(url = "https://packages.confluent.io/maven/")
-    }
-}
-
-configure<com.bakdata.gradle.SonatypeSettings> {
-    developers {
-        developer {
-            name.set("Salomon Popp")
-            id.set("disrupted")
-        }
-        developer {
-            name.set("Philipp Schirmer")
-            id.set("philipp94831")
-        }
+        maven(url = "https://s01.oss.sonatype.org/content/repositories/snapshots")
     }
 }
 
@@ -54,5 +42,18 @@ subprojects {
 
         val log4jVersion: String by project
         "testImplementation"(group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version = log4jVersion)
+    }
+
+    publication {
+        developers {
+            developer {
+                name.set("Salomon Popp")
+                id.set("disrupted")
+            }
+            developer {
+                name.set("Philipp Schirmer")
+                id.set("philipp94831")
+            }
+        }
     }
 }
