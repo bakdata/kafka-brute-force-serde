@@ -8,20 +8,27 @@ plugins {
 dependencies {
     api(project(":brute-force-core"))
 
-    api(group = "org.apache.kafka", name = "kafka-clients")
+    val kafkaUtilsVersion: String by project
+    compileOnly(platform("com.bakdata.kafka:kafka-bom:$kafkaUtilsVersion"))
+    compileOnly(group = "org.apache.kafka", name = "kafka-clients")
     val largeMessageVersion: String by project
-    api(platform("com.bakdata.kafka:large-message-bom:$largeMessageVersion"))
-    implementation(group = "com.bakdata.kafka", name = "large-message-serde")
+    implementation(group = "com.bakdata.kafka", name = "large-message-serde", version = largeMessageVersion)
 
-    testImplementation(group = "io.confluent", name = "kafka-streams-avro-serde")
-    testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde")
-    testImplementation(group = "io.confluent", name = "kafka-streams-json-schema-serde")
+    testImplementation(group = "io.confluent", name = "kafka-streams-avro-serde") {
+        exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
+    }
+    testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde") {
+        exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
+    }
+    testImplementation(group = "io.confluent", name = "kafka-streams-json-schema-serde") {
+        exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
+    }
 
     val testContainersVersion: String by project
     testImplementation(group = "org.testcontainers", name = "junit-jupiter", version = testContainersVersion)
     testImplementation(group = "org.testcontainers", name = "localstack", version = testContainersVersion)
 
-    val fluentKafkaVersion = "3.3.0"
+    val fluentKafkaVersion = "3.5.1"
     testImplementation(
         group = "com.bakdata.fluent-kafka-streams-tests",
         name = "fluent-kafka-streams-tests-junit5",
