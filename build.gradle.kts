@@ -1,8 +1,8 @@
 plugins {
-    id("com.bakdata.release") version "2.1.0"
-    id("com.bakdata.sonar") version "2.1.0"
-    id("com.bakdata.sonatype") version "2.1.0"
-    id("io.freefair.lombok") version "9.2.0"
+    alias(libs.plugins.release)
+    alias(libs.plugins.sonar)
+    alias(libs.plugins.sonatype)
+    alias(libs.plugins.lombok)
 }
 
 allprojects {
@@ -31,16 +31,13 @@ subprojects {
     }
 
     dependencies {
-        val slf4jVersion: String by project
-        "implementation"(group = "org.slf4j", name = "slf4j-api", version = slf4jVersion)
+        "implementation"(rootProject.libs.slf4j.api)
 
-        val junitVersion: String by project
-        "testRuntimeOnly"(group = "org.junit.platform", name = "junit-platform-launcher", version = junitVersion)
-        "testImplementation"(group = "org.junit.jupiter", name = "junit-jupiter", version = junitVersion)
-        "testImplementation"(group = "org.assertj", name = "assertj-core", version = "3.27.7")
+        "testRuntimeOnly"(rootProject.libs.junit.platform.launcher)
+        "testImplementation"(rootProject.libs.junit.jupiter)
+        "testImplementation"(rootProject.libs.assertj)
 
-        val log4jVersion: String by project
-        "testImplementation"(group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version = log4jVersion)
+        "testImplementation"(rootProject.libs.log4j.slf4j2)
     }
 
     publication {

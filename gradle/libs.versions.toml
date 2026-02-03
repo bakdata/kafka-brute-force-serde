@@ -1,9 +1,8 @@
 [versions]
 junit = "6.0.2"
 slf4j = "2.0.17"
-aws = "2.41.19"
-mockito = "5.21.0"
 testcontainers = "1.21.4"
+largeMessage = "3.1.1"
 
 [libraries]
 kafka-bom = { group = "com.bakdata.kafka", name = "kafka-bom", version = "1.3.1" }
@@ -14,23 +13,22 @@ kafka-connect-api = { group = "org.apache.kafka", name = "connect-api" }
 kafka-connect-runtime = { group = "org.apache.kafka", name = "connect-runtime" }
 kafka-connect-file = { group = "org.apache.kafka", name = "connect-file" }
 kafka-test-common-runtime = { group = "org.apache.kafka", name = "kafka-test-common-runtime" }
+kafka-streams-avro-serde = { group = "io.confluent", name = "kafka-streams-avro-serde" }
+kafka-streams-protobuf-serde = { group = "io.confluent", name = "kafka-streams-protobuf-serde" }
+kafka-streams-json-serde = { group = "io.confluent", name = "kafka-streams-json-schema-serde" }
+kafka-connect-avro-converter = { group = "io.confluent", name = "kafka-connect-avro-converter" }
+kafka-connect-protobuf-converter = { group = "io.confluent", name = "kafka-connect-protobuf-converter" }
+kafka-connect-json-converter = { group = "io.confluent", name = "kafka-connect-json-schema-converter" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
-slf4j-jcl = { group = "org.slf4j", name = "jcl-over-slf4j", version.ref = "slf4j" }
-aws-s3 = { group = "software.amazon.awssdk", name = "s3", version.ref = "aws" }
-aws-sts = { group = "software.amazon.awssdk", name = "sts", version.ref = "aws" }
-azure-storage-blob = { group = "com.azure", name = "azure-storage-blob", version = "12.31.3" }
-google-cloud-storage = { group = "com.google.cloud", name = "google-cloud-storage", version = "2.62.1" }
-google-cloud-nio = { group = "com.google.cloud", name = "google-cloud-nio", version = "0.128.11" }
-guava = { group = "com.google.guava", name = "guava", version = "33.5.0-jre" }
+protobuf = { group = "com.google.protobuf", name = "protobuf-java", version = "4.33.2" }
+largeMessage-serde = { group = "com.bakdata.kafka", name = "large-message-serde", version.ref = "largeMessage" }
+largeMessage-connect = { group = "com.bakdata.kafka", name = "large-message-connect", version.ref = "largeMessage" }
 
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
 assertj = { group = "org.assertj", name = "assertj-core", version = "3.27.7" }
-mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
-mockito-junit = { group = "org.mockito", name = "mockito-junit-jupiter", version.ref = "mockito" }
 testcontainers-junit = { group = "org.testcontainers", name = "junit-jupiter", version.ref = "testcontainers" }
 testcontainers-localstack = { group = "org.testcontainers", name = "localstack", version.ref = "testcontainers" }
-testcontainers-azure = { group = "org.testcontainers", name = "azure", version.ref = "testcontainers" }
 fluentKafkaStreamsTests = { group = "com.bakdata.fluent-kafka-streams-tests", name = "fluent-kafka-streams-tests-junit5", version = "3.5.1" }
 log4j-slf4j2 = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version = "2.25.3" }
 
@@ -39,3 +37,5 @@ release = { id = "com.bakdata.release", version = "2.1.0" }
 sonar = { id = "com.bakdata.sonar", version = "2.1.0" }
 sonatype = { id = "com.bakdata.sonatype", version = "2.1.0" }
 lombok = { id = "io.freefair.lombok", version = "9.2.0" }
+avro = { id = "com.github.davidmc24.gradle.plugin.avro", version = "1.9.1" }
+protobuf = { id = "com.google.protobuf", version = "0.9.4" }
