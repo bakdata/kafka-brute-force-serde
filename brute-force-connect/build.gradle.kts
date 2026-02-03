@@ -3,20 +3,34 @@ description = "Kafka Connect Converter that deserializes messages of an unknown 
 dependencies {
     api(project(":brute-force-core"))
 
-    api(group = "org.apache.kafka", name = "connect-api")
+    val kafkaUtilsVersion: String by project
+    compileOnly(platform("com.bakdata.kafka:kafka-bom:$kafkaUtilsVersion"))
+    compileOnly(group = "org.apache.kafka", name = "connect-api")
     compileOnly(group = "org.apache.kafka", name = "connect-runtime")
 
     val largeMessageVersion: String by project
-    api(platform("com.bakdata.kafka:large-message-bom:$largeMessageVersion"))
-    implementation(group = "com.bakdata.kafka", name = "large-message-connect")
+    implementation(group = "com.bakdata.kafka", name = "large-message-connect", version = largeMessageVersion)
 
-    testImplementation(group = "io.confluent", name = "kafka-connect-avro-converter")
-    testImplementation(group = "io.confluent", name = "kafka-connect-protobuf-converter")
-    testImplementation(group = "io.confluent", name = "kafka-connect-json-schema-converter")
+    testImplementation(platform("com.bakdata.kafka:kafka-bom:$kafkaUtilsVersion"))
+    testImplementation(group = "io.confluent", name = "kafka-connect-avro-converter") {
+        exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
+    }
+    testImplementation(group = "io.confluent", name = "kafka-connect-protobuf-converter") {
+        exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
+    }
+    testImplementation(group = "io.confluent", name = "kafka-connect-json-schema-converter") {
+        exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
+    }
 
-    testImplementation(group = "io.confluent", name = "kafka-streams-avro-serde")
-    testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde")
-    testImplementation(group = "io.confluent", name = "kafka-streams-json-schema-serde")
+    testImplementation(group = "io.confluent", name = "kafka-streams-avro-serde") {
+        exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
+    }
+    testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde") {
+        exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
+    }
+    testImplementation(group = "io.confluent", name = "kafka-streams-json-schema-serde") {
+        exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
+    }
 
     val testContainersVersion: String by project
     testImplementation(group = "org.testcontainers", name = "junit-jupiter", version = testContainersVersion)
