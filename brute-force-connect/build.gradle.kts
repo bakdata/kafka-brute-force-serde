@@ -34,6 +34,7 @@ dependencies {
     testImplementation(libs.testcontainers.localstack)
 
     testImplementation(libs.largeMessage.serde)
+    testImplementation(libs.protobuf)
     testImplementation(libs.kafka.connect.file)
     testImplementation(libs.kafka.connect.runtime)
     testImplementation(variantOf(libs.kafka.connect.runtime) {
