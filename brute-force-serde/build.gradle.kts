@@ -20,7 +20,6 @@ dependencies {
     val testContainersVersion: String by project
     testImplementation(group = "org.testcontainers", name = "junit-jupiter", version = testContainersVersion)
     testImplementation(group = "org.testcontainers", name = "localstack", version = testContainersVersion)
-    testImplementation(group = "org.jooq", name = "jool", version = "0.9.15")
 
     val fluentKafkaVersion = "3.3.0"
     testImplementation(

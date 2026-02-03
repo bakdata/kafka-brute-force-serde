@@ -1,8 +1,8 @@
 plugins {
-    id("com.bakdata.release") version "1.9.0"
-    id("com.bakdata.sonar") version "1.9.0"
-    id("com.bakdata.sonatype") version "1.9.0"
-    id("io.freefair.lombok") version "8.12.2.1"
+    id("com.bakdata.release") version "2.1.0"
+    id("com.bakdata.sonar") version "2.1.0"
+    id("com.bakdata.sonatype") version "2.1.0"
+    id("io.freefair.lombok") version "9.2.0"
 }
 
 allprojects {
@@ -26,7 +26,7 @@ subprojects {
 
     configure<JavaPluginExtension> {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(11)
+            languageVersion = JavaLanguageVersion.of(17)
         }
     }
 
@@ -35,10 +35,9 @@ subprojects {
         "implementation"(group = "org.slf4j", name = "slf4j-api", version = slf4jVersion)
 
         val junitVersion: String by project
-        "testImplementation"(group = "org.junit.jupiter", name = "junit-jupiter-api", version = junitVersion)
-        "testImplementation"(group = "org.junit.jupiter", name = "junit-jupiter-params", version = junitVersion)
-        "testRuntimeOnly"(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = junitVersion)
-        "testImplementation"(group = "org.assertj", name = "assertj-core", version = "3.27.2")
+        "testRuntimeOnly"(group = "org.junit.platform", name = "junit-platform-launcher", version = junitVersion)
+        "testImplementation"(group = "org.junit.jupiter", name = "junit-jupiter", version = junitVersion)
+        "testImplementation"(group = "org.assertj", name = "assertj-core", version = "3.27.7")
 
         val log4jVersion: String by project
         "testImplementation"(group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version = log4jVersion)
