@@ -1,0 +1,47 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      kafka-dependencies:
+        patterns:
+          - "com.bakdata.kafka*"
+          - "com.bakdata.fluent-kafka-streams-tests*"
+          - "io.confluent*"
+          - "org.apache.kafka*"
+      log-dependencies:
+        patterns:
+          - "org.slf4j*"
+          - "org.apache.logging.log4j*"
+      test-dependencies:
+        patterns:
+          - "org.junit*"
+          - "org.assertj*"
+          - "*junit*"
+          - "org.mockito*"
+          - "org.testcontainers*"
+          - "org.awaitility*"
+        exclude-patterns:
+          - "com.bakdata.fluent-kafka-streams-tests*"
+      plugins:
+        patterns:
+          - "com.bakdata.release"
+          - "com.bakdata.sonar"
+          - "com.bakdata.sonatype"
+      protobuf:
+        patterns:
+          - "com.google.protobuf*"
+      freefair-plugins:
+        patterns:
+          - "io.freefair*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      ci-templates:
+        patterns:
+          - "bakdata/ci-templates*"

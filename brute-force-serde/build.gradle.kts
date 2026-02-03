@@ -1,43 +1,36 @@
 description = "Kafka SerDe that deserializes messages of an unknown serialization format"
 
 plugins {
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
-    id("com.google.protobuf") version "0.9.4"
+    alias(libs.plugins.avro)
+    alias(libs.plugins.protobuf)
 }
 
 dependencies {
     api(project(":brute-force-core"))
 
-    val kafkaUtilsVersion: String by project
-    compileOnly(platform("com.bakdata.kafka:kafka-bom:$kafkaUtilsVersion"))
-    compileOnly(group = "org.apache.kafka", name = "kafka-clients")
-    val largeMessageVersion: String by project
-    implementation(group = "com.bakdata.kafka", name = "large-message-serde", version = largeMessageVersion)
+    compileOnly(platform(libs.kafka.bom))
+    compileOnly(libs.kafka.clients)
+    implementation(libs.largeMessage.serde)
 
-    testImplementation(group = "io.confluent", name = "kafka-streams-avro-serde") {
+    testImplementation(libs.kafka.streams.avro.serde) {
         exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
     }
-    testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde") {
+    testImplementation(libs.kafka.streams.protobuf.serde) {
         exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
     }
-    testImplementation(group = "io.confluent", name = "kafka-streams-json-schema-serde") {
+    testImplementation(libs.kafka.streams.json.serde) {
         exclude(group = "org.apache.kafka") // force usage of OSS kafka-clients
     }
 
-    val testContainersVersion: String by project
-    testImplementation(group = "org.testcontainers", name = "junit-jupiter", version = testContainersVersion)
-    testImplementation(group = "org.testcontainers", name = "localstack", version = testContainersVersion)
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.localstack)
 
-    val fluentKafkaVersion = "3.5.1"
-    testImplementation(
-        group = "com.bakdata.fluent-kafka-streams-tests",
-        name = "fluent-kafka-streams-tests-junit5",
-        version = fluentKafkaVersion
-    )
+    testImplementation(libs.fluentKafkaStreamsTests)
 }
 
+val protobufVersion = libs.protobuf.get().version
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.25.5"
+        artifact = "com.google.protobuf:protoc:$protobufVersion"
     }
 }
