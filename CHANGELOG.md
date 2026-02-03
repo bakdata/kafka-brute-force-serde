@@ -1,63 +1,119 @@
-# Change Log
+# Changelog
 
-## [1.4.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.4.0) (2025-03-21)
-[View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/1.4.0...1.4.0)
+All notable changes to this project will be documented in this file.
+
+## [2.0.0](https://github.com/bakdata/kafka-brute-force-serde/tree/2.0.0) - 2026-02-03
+### What's changed
+
+* Upgrade to Gradle 9.3 by @philipp94831 in [#14](https://github.com/bakdata/kafka-brute-force-serde/pull/14)
+
+* Expose Kafka dependencies as provided by @philipp94831 in [#15](https://github.com/bakdata/kafka-brute-force-serde/pull/15)
+
+* Upgrade to Kafka 4.1 by @philipp94831 in [#16](https://github.com/bakdata/kafka-brute-force-serde/pull/16)
+
+* Migrate to version catalog and configure Dependabot by @philipp94831 in [#17](https://github.com/bakdata/kafka-brute-force-serde/pull/17)
 
 
-## [1.4.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.4.0) (2025-03-21)
-[View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/1.3.0...1.4.0)
+**Full Changelog**: https://github.com/bakdata/kafka-brute-force-serde/compare/1.4.0...2.0.0
 
-**Merged pull requests:**
+## [1.4.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.4.0) - 2025-03-21
+### What's changed
 
-- Upgrade to Kafka 3.9 [\#13](https://github.com/bakdata/kafka-brute-force-serde/pull/13) ([@philipp94831](https://github.com/philipp94831))
+* Upgrade to Kafka 3.9 by @philipp94831 in [#13](https://github.com/bakdata/kafka-brute-force-serde/pull/13)
 
-## [1.3.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.3.0) (2025-01-14)
-[View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/1.2.1...1.3.0)
 
-**Merged pull requests:**
+**Full Changelog**: https://github.com/bakdata/kafka-brute-force-serde/compare/1.3.0...1.4.0
 
-- Upgrade to Kafka 3.8 [\#12](https://github.com/bakdata/kafka-brute-force-serde/pull/12) ([@philipp94831](https://github.com/philipp94831))
-- Upgrade to Gradle 8.4 [\#11](https://github.com/bakdata/kafka-brute-force-serde/pull/11) ([@philipp94831](https://github.com/philipp94831))
-- Fix Jacoco for Java 17 [\#10](https://github.com/bakdata/kafka-brute-force-serde/pull/10) ([@philipp94831](https://github.com/philipp94831))
+## [1.3.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.3.0) - 2025-01-14
+### What's changed
 
-## [1.2.1](https://github.com/bakdata/kafka-brute-force-serde/tree/1.2.1) (2024-01-17)
-[View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/1.2.0...1.2.1)
+* Fix Jacoco for Java 17 by @philipp94831 in [#10](https://github.com/bakdata/kafka-brute-force-serde/pull/10)
 
-**Merged pull requests:**
+* Upgrade to Gradle 8.4 by @philipp94831 in [#11](https://github.com/bakdata/kafka-brute-force-serde/pull/11)
 
-- Upgrade to Kafka 3.5 [\#9](https://github.com/bakdata/kafka-brute-force-serde/pull/9) ([@philipp94831](https://github.com/philipp94831))
-- Bump version of ci\-templates to fix Nexus publish [\#8](https://github.com/bakdata/kafka-brute-force-serde/pull/8) ([@yannick-roeder](https://github.com/yannick-roeder))
-- Migrate azure pipeline to GH\-action [\#7](https://github.com/bakdata/kafka-brute-force-serde/pull/7) ([@MichaelKora](https://github.com/MichaelKora))
+* Upgrade to Kafka 3.8 by @philipp94831 in [#12](https://github.com/bakdata/kafka-brute-force-serde/pull/12)
 
-## [1.2.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.2.0) (2022-05-31)
-[View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/1.1.1...1.2.0)
 
-**Closed issues:**
+**Full Changelog**: https://github.com/bakdata/kafka-brute-force-serde/compare/1.2.1...1.3.0
 
-- Add other Schema Registry serializers [\#4](https://github.com/bakdata/kafka-brute-force-serde/issues/4)
+## [1.2.1](https://github.com/bakdata/kafka-brute-force-serde/tree/1.2.1) - 2024-01-17
+### What's changed
 
-**Merged pull requests:**
+* Migrate azure pipeline to GH-action by @MichaelKora in [#7](https://github.com/bakdata/kafka-brute-force-serde/pull/7)
 
-- Add missing description for core module [\#6](https://github.com/bakdata/kafka-brute-force-serde/pull/6) ([@torbsto](https://github.com/torbsto))
-- Add configuration options [\#5](https://github.com/bakdata/kafka-brute-force-serde/pull/5) ([@torbsto](https://github.com/torbsto))
+* Bump version of ci-templates to fix Nexus publish by @yannick-roeder in [#8](https://github.com/bakdata/kafka-brute-force-serde/pull/8)
 
-## [1.1.1](https://github.com/bakdata/kafka-brute-force-serde/tree/1.1.1) (2022-03-28)
-[View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/1.1.0...1.1.1)
+* Upgrade to Kafka 3.5 by @philipp94831 in [#9](https://github.com/bakdata/kafka-brute-force-serde/pull/9)
 
-**Merged pull requests:**
 
-- Update large message [\#3](https://github.com/bakdata/kafka-brute-force-serde/pull/3) ([@philipp94831](https://github.com/philipp94831))
+### New Contributors
+* @yannick-roeder made their first contribution in [#8](https://github.com/bakdata/kafka-brute-force-serde/pull/8)
+* @MichaelKora made their first contribution in [#7](https://github.com/bakdata/kafka-brute-force-serde/pull/7)
 
-## [1.1.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.1.0) (2022-03-23)
-[View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/1.0.0...1.1.0)
+**Full Changelog**: https://github.com/bakdata/kafka-brute-force-serde/compare/1.2.0...1.2.1
 
-**Merged pull requests:**
+## [1.2.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.2.0) - 2022-05-31
+### What's changed
 
-- Use headers in deserializer api [\#2](https://github.com/bakdata/kafka-brute-force-serde/pull/2) ([@philipp94831](https://github.com/philipp94831))
+* Add configuration options in [#5](https://github.com/bakdata/kafka-brute-force-serde/pull/5)
 
-## [1.0.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.0.0) (2022-03-17)
-[View commits](https://github.com/bakdata/kafka-brute-force-serde/compare/9843772e5247a92e1d2a00713022e9b4292aee6f...1.0.0)
+* Add missing description for core module by @torbsto in [#6](https://github.com/bakdata/kafka-brute-force-serde/pull/6)
 
-**Merged pull requests:**
 
-- Create Brute Force Serde [\#1](https://github.com/bakdata/kafka-brute-force-serde/pull/1) ([@philipp94831](https://github.com/philipp94831))
+### New Contributors
+* @torbsto made their first contribution in [#6](https://github.com/bakdata/kafka-brute-force-serde/pull/6)
+* @ made their first contribution in [#5](https://github.com/bakdata/kafka-brute-force-serde/pull/5)
+
+**Full Changelog**: https://github.com/bakdata/kafka-brute-force-serde/compare/1.1.1...1.2.0
+
+## [1.1.1](https://github.com/bakdata/kafka-brute-force-serde/tree/1.1.1) - 2022-03-28
+### What's changed
+
+* Update large message by @philipp94831 in [#3](https://github.com/bakdata/kafka-brute-force-serde/pull/3)
+
+
+**Full Changelog**: https://github.com/bakdata/kafka-brute-force-serde/compare/1.1.0...1.1.1
+
+## [1.1.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.1.0) - 2022-03-23
+### What's changed
+
+* Use headers in deserializer api by @philipp94831 in [#2](https://github.com/bakdata/kafka-brute-force-serde/pull/2)
+
+
+**Full Changelog**: https://github.com/bakdata/kafka-brute-force-serde/compare/1.0.0...1.1.0
+
+## [1.0.0](https://github.com/bakdata/kafka-brute-force-serde/tree/1.0.0) - 2022-03-17
+### What's changed
+
+* Initial commit by @philipp94831
+
+* Create Brute Force Serde by @philipp94831
+
+* Create Brute Force Serde by @philipp94831
+
+* Update docs by @philipp94831
+
+* Update docs by @philipp94831
+
+* Update docs by @philipp94831
+
+* Update docs by @philipp94831
+
+* Update docs by @philipp94831
+
+* Address review by @philipp94831
+
+* Address review by @philipp94831
+
+* Address review by @philipp94831
+
+* Address review by @philipp94831
+
+* Create Brute Force Serde by @philipp94831 in [#1](https://github.com/bakdata/kafka-brute-force-serde/pull/1)
+
+
+### New Contributors
+* @bakdata-bot made their first contribution
+* @philipp94831 made their first contribution in [#1](https://github.com/bakdata/kafka-brute-force-serde/pull/1)
+
+<!-- generated by git-cliff -->
