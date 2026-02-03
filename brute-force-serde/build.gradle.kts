@@ -28,7 +28,7 @@ dependencies {
     testImplementation(group = "org.testcontainers", name = "junit-jupiter", version = testContainersVersion)
     testImplementation(group = "org.testcontainers", name = "localstack", version = testContainersVersion)
 
-    val fluentKafkaVersion = "3.3.0"
+    val fluentKafkaVersion = "3.5.1"
     testImplementation(
         group = "com.bakdata.fluent-kafka-streams-tests",
         name = "fluent-kafka-streams-tests-junit5",

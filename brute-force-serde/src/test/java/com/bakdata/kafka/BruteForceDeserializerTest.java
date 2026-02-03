@@ -25,17 +25,24 @@
 package com.bakdata.kafka;
 
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.bakdata.Id;
 import com.bakdata.fluent_kafka_streams_tests.TestTopology;
 import com.bakdata.kafka.Test.ProtobufRecord;
+import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientFactory;
+import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
+import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import io.confluent.kafka.streams.serdes.json.KafkaJsonSchemaSerde;
 import io.confluent.kafka.streams.serdes.protobuf.KafkaProtobufSerde;
+import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +72,7 @@ import org.apache.kafka.streams.errors.StreamsException;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -227,6 +235,22 @@ class BruteForceDeserializerTest {
         return new GenericRecordBuilder(schema)
                 .set("id", "foo")
                 .build();
+    }
+
+    private static void configureSchemaRegistry() throws IOException {
+        try (final SchemaRegistryClient ignored = SchemaRegistryClientFactory.newClient(List.of(SCHEMA_REGISTRY_URL), 0,
+                List.of(
+                        new AvroSchemaProvider(),
+                        new ProtobufSchemaProvider(),
+                        new JsonSchemaProvider()
+                ), emptyMap(), null)) {
+            // do nothing
+        }
+    }
+
+    @BeforeEach
+    void setup() throws IOException {
+        configureSchemaRegistry();
     }
 
     @AfterEach

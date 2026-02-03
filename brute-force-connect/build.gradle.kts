@@ -48,4 +48,5 @@ dependencies {
     testImplementation(group = "org.apache.kafka", name = "kafka_2.13")
     testImplementation(group = "org.apache.kafka", name = "kafka_2.13", classifier = "test")
     testImplementation(group = "org.apache.kafka", name = "kafka-server-common", classifier = "test")
+    testImplementation(group = "org.apache.kafka", name = "kafka-test-common-runtime")
 }
