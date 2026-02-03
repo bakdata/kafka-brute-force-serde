@@ -35,6 +35,11 @@ import com.google.protobuf.DynamicMessage;
 import io.confluent.connect.avro.AvroConverter;
 import io.confluent.connect.json.JsonSchemaConverter;
 import io.confluent.connect.protobuf.ProtobufConverter;
+import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientFactory;
+import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
+import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.dynamic.DynamicSchema;
 import io.confluent.kafka.schemaregistry.protobuf.dynamic.MessageDefinition;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
@@ -43,6 +48,7 @@ import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerializer;
 import io.confluent.kafka.streams.serdes.json.KafkaJsonSchemaSerde;
 import io.confluent.kafka.streams.serdes.protobuf.KafkaProtobufSerde;
+import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -68,6 +74,7 @@ import org.apache.kafka.connect.converters.ByteArrayConverter;
 import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.storage.Converter;
 import org.apache.kafka.connect.storage.StringConverter;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -91,6 +98,7 @@ class BruteForceConverterTest {
     @Container
     private static final LocalStackContainer LOCAL_STACK_CONTAINER = new LocalStackContainer(LOCAL_STACK_IMAGE)
             .withServices(Service.S3);
+    private static final String SCHEMA_REGISTRY_URL = "mock://";
 
     static S3Client getS3Client() {
         return S3Client.builder()
@@ -204,6 +212,23 @@ class BruteForceConverterTest {
                 )
                 .map(f -> f.apply(baseSerde))
                 .map(Arguments::of);
+    }
+
+    private static void configureSchemaRegistry() throws IOException {
+        // providers need to be registered
+        try (final SchemaRegistryClient ignored = SchemaRegistryClientFactory.newClient(SCHEMA_REGISTRY_URL, 0,
+                List.of(
+                        new AvroSchemaProvider(),
+                        new ProtobufSchemaProvider(),
+                        new JsonSchemaProvider()
+                ), emptyMap(), null)) {
+            // do nothing
+        }
+    }
+
+    @BeforeEach
+    void setup() throws IOException {
+        configureSchemaRegistry();
     }
 
     @Test
@@ -383,7 +408,7 @@ class BruteForceConverterTest {
                 .bucket(bucket)
                 .build());
         final Map<String, Object> config = new HashMap<>(originals);
-        config.put(SCHEMA_REGISTRY_URL_CONFIG, "mock://");
+        config.put(SCHEMA_REGISTRY_URL_CONFIG, SCHEMA_REGISTRY_URL);
         config.put(AbstractLargeMessageConfig.BASE_PATH_CONFIG, "s3://" + bucket + "/");
         config.putAll(getS3EndpointConfig());
 
