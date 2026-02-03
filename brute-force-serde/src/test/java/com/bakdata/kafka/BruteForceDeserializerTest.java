@@ -238,7 +238,8 @@ class BruteForceDeserializerTest {
     }
 
     private static void configureSchemaRegistry() throws IOException {
-        try (final SchemaRegistryClient ignored = SchemaRegistryClientFactory.newClient(List.of(SCHEMA_REGISTRY_URL), 0,
+        // providers need to be registered
+        try (final SchemaRegistryClient ignored = SchemaRegistryClientFactory.newClient(SCHEMA_REGISTRY_URL, 0,
                 List.of(
                         new AvroSchemaProvider(),
                         new ProtobufSchemaProvider(),
