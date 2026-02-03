@@ -10,7 +10,8 @@ dependencies {
 
     api(group = "org.apache.kafka", name = "kafka-clients")
     val largeMessageVersion: String by project
-    implementation(group = "com.bakdata.kafka", name = "large-message-serde", version = largeMessageVersion)
+    api(platform("com.bakdata.kafka:large-message-bom:$largeMessageVersion"))
+    implementation(group = "com.bakdata.kafka", name = "large-message-serde")
 
     testImplementation(group = "io.confluent", name = "kafka-streams-avro-serde")
     testImplementation(group = "io.confluent", name = "kafka-streams-protobuf-serde")
