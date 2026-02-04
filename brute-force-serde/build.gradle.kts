@@ -26,6 +26,7 @@ dependencies {
     testImplementation(libs.testcontainers.localstack)
 
     testImplementation(libs.fluentKafkaStreamsTests)
+    testImplementation(libs.protobuf)
 }
 
 val protobufVersion = libs.protobuf.get().version
