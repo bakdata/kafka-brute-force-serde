@@ -1,4 +1,4 @@
-[![Build Status](https://dev.azure.com/bakdata/public/_apis/build/status/bakdata.kafka-brute-force-serde?repoName=bakdata%2Fkafka-brute-force-serde&branchName=main)](https://dev.azure.com/bakdata/public/_build/latest?definitionId=30&repoName=bakdata%2Fkafka-brute-force-serde&branchName=main)
+[![Build and Publish](https://github.com/bakdata/kafka-brute-force-serde/actions/workflows/build-and-publish.yaml/badge.svg)](https://github.com/bakdata/kafka-brute-force-serde/actions/workflows/build-and-publish.yaml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=com.bakdata.kafka%3Abrute-force&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=com.bakdata.kafka%3Abrute-force)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=com.bakdata.kafka%3Abrute-force&metric=coverage)](https://sonarcloud.io/summary/new_code?id=com.bakdata.kafka%3Abrute-force)
 [![Maven](https://img.shields.io/maven-central/v/com.bakdata.kafka/brute-force-serde.svg)](https://search.maven.org/search?q=g:com.bakdata.kafka%20AND%20a:brute-force-serde&core=gav)
