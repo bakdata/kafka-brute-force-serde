@@ -25,6 +25,7 @@ dependencies {
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.localstack)
 
+    testImplementation(platform(libs.kafka.bom))
     testImplementation(libs.fluentKafkaStreamsTests)
     testImplementation(libs.protobuf)
 }
