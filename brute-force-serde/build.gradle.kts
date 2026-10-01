@@ -7,6 +7,7 @@ plugins {
 
 dependencies {
     api(project(":brute-force-core"))
+    api(platform(libs.largeMessage.bom)) // Central repository requires this as a direct dependency to resolve versions
 
     compileOnly(platform(libs.kafka.bom))
     compileOnly(libs.kafka.clients)
@@ -28,6 +29,7 @@ dependencies {
     testImplementation(platform(libs.kafka.bom))
     testImplementation(libs.fluentKafkaStreamsTests)
     testImplementation(libs.protobuf)
+    testImplementation(libs.largeMessage.s3)
 }
 
 val protobufVersion = libs.protobuf.get().version
