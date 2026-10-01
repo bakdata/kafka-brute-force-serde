@@ -105,11 +105,11 @@ class BruteForceConverterIntegrationTest {
     private static Map<String, String> createS3BackedProperties() {
         final Map<String, String> properties = new HashMap<>();
         final AwsBasicCredentials credentials = getCredentials();
-        properties.put(AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG,
+        properties.put(AmazonS3Config.S3_ENDPOINT_CONFIG,
                 getEndpointOverride().toString());
-        properties.put(AbstractLargeMessageConfig.S3_REGION_CONFIG, getRegion().id());
-        properties.put(AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, credentials.accessKeyId());
-        properties.put(AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, credentials.secretAccessKey());
+        properties.put(AmazonS3Config.S3_REGION_CONFIG, getRegion().id());
+        properties.put(AmazonS3Config.S3_ACCESS_KEY_CONFIG, credentials.accessKeyId());
+        properties.put(AmazonS3Config.S3_SECRET_KEY_CONFIG, credentials.secretAccessKey());
         properties.put(AbstractLargeMessageConfig.BASE_PATH_CONFIG, String.format("s3://%s/", BUCKET_NAME));
         return properties;
     }

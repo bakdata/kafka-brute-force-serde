@@ -2,6 +2,7 @@ description = "Kafka Connect Converter that deserializes messages of an unknown 
 
 dependencies {
     api(project(":brute-force-core"))
+    api(platform(libs.largeMessage.bom)) // Central repository requires this as a direct dependency to resolve versions
 
     compileOnly(platform(libs.kafka.bom))
     compileOnly(libs.kafka.connect.api)
@@ -34,6 +35,7 @@ dependencies {
     testImplementation(libs.testcontainers.localstack)
 
     testImplementation(libs.largeMessage.serde)
+    testImplementation(libs.largeMessage.s3)
     testImplementation(libs.kafka.connect.file)
     testImplementation(libs.kafka.connect.runtime)
     testImplementation(variantOf(libs.kafka.connect.runtime) {
