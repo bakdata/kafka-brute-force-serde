@@ -54,10 +54,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.testcontainers.containers.localstack.LocalStackContainer;
-import org.testcontainers.containers.localstack.LocalStackContainer.Service;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.localstack.LocalStackContainer;
 import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -69,10 +68,10 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 class BruteForceConverterIntegrationTest {
 
     private static final DockerImageName LOCAL_STACK_IMAGE = DockerImageName.parse("localstack/localstack")
-            .withTag("4.2.0");
+            .withTag("4.14.0");
     @Container
     private static final LocalStackContainer LOCAL_STACK_CONTAINER = new LocalStackContainer(LOCAL_STACK_IMAGE)
-            .withServices(Service.S3);
+            .withServices("s3");
     private static final String SCHEMA_REGISTRY_URL = "mock://";
     private static final String BUCKET_NAME = "testbucket";
     private static final String TOPIC = "input";
@@ -99,7 +98,7 @@ class BruteForceConverterIntegrationTest {
     }
 
     private static URI getEndpointOverride() {
-        return LOCAL_STACK_CONTAINER.getEndpointOverride(Service.S3);
+        return LOCAL_STACK_CONTAINER.getEndpoint();
     }
 
     private static Map<String, String> createS3BackedProperties() {
