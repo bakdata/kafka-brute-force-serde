@@ -187,10 +187,10 @@ class BruteForceConverterTest {
     private static Map<String, Object> getS3EndpointConfig() {
         final AwsBasicCredentials credentials = getCredentials();
         return Map.of(
-                AbstractLargeMessageConfig.S3_ENDPOINT_CONFIG, getEndpointOverride().toString(),
-                AbstractLargeMessageConfig.S3_REGION_CONFIG, getRegion().id(),
-                AbstractLargeMessageConfig.S3_ACCESS_KEY_CONFIG, credentials.accessKeyId(),
-                AbstractLargeMessageConfig.S3_SECRET_KEY_CONFIG, credentials.secretAccessKey()
+                AmazonS3Config.S3_ENDPOINT_CONFIG, getEndpointOverride().toString(),
+                AmazonS3Config.S3_REGION_CONFIG, getRegion().id(),
+                AmazonS3Config.S3_ACCESS_KEY_CONFIG, credentials.accessKeyId(),
+                AmazonS3Config.S3_SECRET_KEY_CONFIG, credentials.secretAccessKey()
         );
     }
 
